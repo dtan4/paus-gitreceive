@@ -19,8 +19,6 @@ COPY files/sshd_config /etc/ssh/
 
 RUN gitreceive init
 RUN echo "git:passwd" | chpasswd
-RUN groupadd docker && \
-    usermod -G docker git
 COPY files/receiver /home/git/
 
 COPY files/upload-key /usr/local/bin/
