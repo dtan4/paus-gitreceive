@@ -5,4 +5,8 @@ if [ ! -d /home/git/.ssh ]; then
   chown -R git /home/git/.ssh
 fi
 
+if [ -f /var/run/docker.sock ]; then
+  chown root:docker /var/run/docker.sock
+fi
+
 exec $@
