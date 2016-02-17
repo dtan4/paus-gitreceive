@@ -7,7 +7,7 @@ ENV ETCD_VERSION 2.2.5
 ENV GITRECEIVE_COMMIT d152fd28e9dba9fcd0af5366cf188fc89ce8385f
 
 RUN apt-get update && \
-    apt-get install -y git openssh-server wget && \
+    apt-get install -y git jq openssh-server wget && \
     rm -rf /var/lib/apt/lists/*
 
 RUN wget -qO /usr/local/bin/docker https://get.docker.com/builds/Linux/x86_64/docker-$DOCKER_VERSION && \
