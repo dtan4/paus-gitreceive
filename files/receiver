@@ -17,9 +17,9 @@ cd /tmp/build/$1
 
 if [[ -f docker-compose.yml ]]; then
   echo "docker-compose.yml was detected"
-  docker-compose build
-  docker-compose pull
-  docker-compose up -d
+  docker-compose -p $1$2 build
+  docker-compose -p $1$2 pull
+  docker-compose -p $1$2 up -d
 else
   echo "docker-compose.yml was NOT found!"
   exit_code=1
