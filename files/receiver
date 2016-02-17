@@ -3,6 +3,8 @@
 set -e
 
 BASE_DIR=`pwd`
+# https://github.com/docker/docker/issues/8395#issuecomment-57918396
+HOST_IP=`ip route show 0.0.0.0/0 | grep -Eo 'via \S+' | awk '{ print $2 }'`
 
 exit_code=0
 
@@ -17,9 +19,9 @@ cd /tmp/build/$1
 
 if [[ -f docker-compose.yml ]]; then
   echo "docker-compose.yml was detected"
-  docker-compose -p $1$2 build
-  docker-compose -p $1$2 pull
-  docker-compose -p $1$2 up -d
+  DOCKER_HOST=tcp://$HOST_IP:2375 docker-compose -p $1$2 build
+  DOCKER_HOST=tcp://$HOST_IP:2375 docker-compose -p $1$2 pull
+  DOCKER_HOST=tcp://$HOST_IP:2375 docker-compose -p $1$2 up -d
 else
   echo "docker-compose.yml was NOT found!"
   exit_code=1
