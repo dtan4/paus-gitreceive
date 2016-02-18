@@ -12,7 +12,6 @@ export ETCDCTL_ENDPOINT=http://$HOST_IP:2379
 PROJECT_NAME=$(echo "$1" | tr "/" "-")-$(echo $2 | awk '{ print substr($0, 0, 8) }')
 
 BASE_DOMAIN=`cat /base-domain`
-WEB_CONTAINER_PORT=8080
 
 exit_code=0
 
@@ -39,7 +38,7 @@ if [[ -f docker-compose.yml ]]; then
 
   web_container_id=`docker-compose -p $PROJECT_NAME ps -q web`
   web_container_ip=`docker inspect $web_container_id | jq -r .[0].NetworkSettings.IPAddress`
-  web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["$WEB_CONTAINER_PORT/tcp"] | .[0].HostPort'`
+  web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostPort'`
 
   etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}' > /dev/null
   etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$HOST_IP:$web_container_port\"}" > /dev/null
