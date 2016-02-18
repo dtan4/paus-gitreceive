@@ -8,35 +8,46 @@ HOST_IP=`ip route show 0.0.0.0/0 | grep -Eo 'via \S+' | awk '{ print $2 }'`
 export DOCKER_HOST=tcp://$HOST_IP:2375
 export ETCDCTL_ENDPOINT=http://$HOST_IP:2379
 
-# dtan4-edc8df8395bdd6f063ae1fe57bf22a60d11e1912
-PROJECT_NAME=$3-$2
+# dtan4-paus-edc8df8
+PROJECT_NAME=$(echo "$1" | tr "/" "-")-$(echo $2 | awk '{ print substr($0, 0, 7) }')
+
+BASE_DOMAIN=`cat /base-domain`
 
 exit_code=0
 
-echo "Repository: $1"
-echo "Revision: $2"
-echo "Username: $3"
-echo "Fingerprint: $4"
+# echo "Repository: $1"
+# echo "Revision: $2"
+# echo "Username: $3"
+# echo "Fingerprint: $4"
 
 mkdir -p /tmp/build/$1 || true
 cat | tar -x -C /tmp/build/$1
 cd /tmp/build/$1
 
 if [[ -f docker-compose.yml ]]; then
-  echo "docker-compose.yml was detected"
+  echo "=====> docker-compose.yml was detected"
+
+  echo "=====> Building..."
   docker-compose -p $PROJECT_NAME build
+
+  echo "=====> Pulling..."
   docker-compose -p $PROJECT_NAME pull
+
+  echo "=====> Deploying..."
   docker-compose -p $PROJECT_NAME up -d
 
   web_container_id=`docker-compose -p $PROJECT_NAME ps -q web`
   web_container_ip=`docker inspect $web_container_id | jq -r .[0].NetworkSettings.IPAddress`
   web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostPort'`
 
-  etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}'
-  etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$HOST_IP:$web_container_port\"}"
-  etcdctl set /vulcand/frontends/$PROJECT_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$3-$2.example.com\`) && PathRegexp(\`/\`)\"}"
+  etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}' > /dev/null
+  etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$HOST_IP:$web_container_port\"}" > /dev/null
+  domain=$(etcdctl set /vulcand/frontends/$PROJECT_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$PROJECT_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+              | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+
+  echo "=====> $1 was deployed at http://$domain/"
 else
-  echo "docker-compose.yml was NOT found!"
+  echo "=====> docker-compose.yml was NOT found!"
   exit_code=1
 fi
 
