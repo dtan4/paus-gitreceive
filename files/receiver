@@ -9,7 +9,7 @@ export DOCKER_HOST=tcp://$HOST_IP:2375
 export ETCDCTL_ENDPOINT=http://$HOST_IP:2379
 
 # dtan4-paus-edc8df8
-PROJECT_NAME=$(echo "$1" | tr "/" "-")-$(echo $2 | awk '{ print substr($0, 0, 7) }')
+PROJECT_NAME=$(echo "$1" | tr "/" "-")-$(echo $2 | awk '{ print substr($0, 0, 8) }')
 
 BASE_DOMAIN=`cat /base-domain`
 
