@@ -97,6 +97,19 @@ web_container_id=`docker-compose -p $PROJECT_NAME ps -q web`
 web_container_host_ip=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostIp'`
 web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostPort'`
 
+if ! etcdctl ls /paus/users/$USER_NAME/ > /dev/null 2>&1 ; then
+  etcdctl mkdir /paus/users/$USER_NAME/ > /dev/null
+fi
+
+if ! etcdctl ls /paus/users/$USER_NAME/$APP_NAME/ > /dev/null 2>&1 ; then
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/ > /dev/null
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/envs/ > /dev/null
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/revisions/ > /dev/null
+fi
+
+# Set deploy time as UNIX timestamp
+etcdctl set /paus/users/$USER_NAME/$APP_NAME/revisions/$REVISION $(date +%s) > /dev/null
+
 etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}' > /dev/null
 etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$web_container_host_ip:$web_container_port\"}" > /dev/null
 domain=$(
