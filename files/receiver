@@ -12,6 +12,7 @@ export ETCDCTL_ENDPOINT=http://$HOST_IP:2379
 REPOSITORY=$(echo "$1" | sed -e "s@\/@-@g")
 REVISION=$(echo "$2")
 USER_NAME=$(echo "$3")
+APP_NAME=$(echo $REPOSITORY | sed -e "s/$USER_NAME-//g")
 PROJECT_NAME=$REPOSITORY-$(echo $REVISION | awk '{ print substr($0, 0, 8) }')
 
 BASE_DOMAIN=`cat /base-domain`
@@ -96,22 +97,50 @@ web_container_id=`docker-compose -p $PROJECT_NAME ps -q web`
 web_container_host_ip=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostIp'`
 web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettings.Ports | .["8080/tcp"] | .[0].HostPort'`
 
+if ! etcdctl ls /paus/users/$USER_NAME/ > /dev/null 2>&1 ; then
+  etcdctl mkdir /paus/users/$USER_NAME/ > /dev/null
+fi
+
+if ! etcdctl ls /paus/users/$USER_NAME/$APP_NAME/ > /dev/null 2>&1 ; then
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/ > /dev/null
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/envs/ > /dev/null
+  etcdctl mkdir /paus/users/$USER_NAME/$APP_NAME/revisions/ > /dev/null
+fi
+
+# Set deploy time as UNIX timestamp
+etcdctl set /paus/users/$USER_NAME/$APP_NAME/revisions/$REVISION $(date +%s) > /dev/null
+
 etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}' > /dev/null
 etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$web_container_host_ip:$web_container_port\"}" > /dev/null
-domain=$(etcdctl set /vulcand/frontends/$PROJECT_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$PROJECT_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$PROJECT_NAME/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$PROJECT_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
 # username.pausapp.com
-domain=$(etcdctl set /vulcand/frontends/$USER_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$USER_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$USER_NAME/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$USER_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
 # appname.pausapp.com
-domain=$(etcdctl set /vulcand/frontends/$REPOSITORY/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$REPOSITORY.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$REPOSITORY/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$APP_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
