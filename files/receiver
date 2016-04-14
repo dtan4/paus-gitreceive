@@ -98,20 +98,35 @@ web_container_port=`docker inspect $web_container_id | jq -r '.[0].NetworkSettin
 
 etcdctl set /vulcand/backends/$PROJECT_NAME/backend '{"Type": "http"}' > /dev/null
 etcdctl set /vulcand/backends/$PROJECT_NAME/servers/$web_container_id "{\"URL\": \"http://$web_container_host_ip:$web_container_port\"}" > /dev/null
-domain=$(etcdctl set /vulcand/frontends/$PROJECT_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$PROJECT_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$PROJECT_NAME/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$PROJECT_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
 # username.pausapp.com
-domain=$(etcdctl set /vulcand/frontends/$USER_NAME/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$USER_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$USER_NAME/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$USER_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
 # appname.pausapp.com
-domain=$(etcdctl set /vulcand/frontends/$REPOSITORY/frontend "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$REPOSITORY.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
-            | jq -r .Route | sed -E "s/Host\(\`(.+?)\`\).+/\1/")
+domain=$(
+  etcdctl set \
+          /vulcand/frontends/$REPOSITORY/frontend \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$REPOSITORY.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+    | jq -r .Route \
+    | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
+      )
 
 echo "=====> $REPOSITORY was deployed at https://$domain/"
 
