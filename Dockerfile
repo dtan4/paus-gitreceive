@@ -26,6 +26,8 @@ RUN wget -qO /usr/local/bin/gitreceive https://raw.githubusercontent.com/progriu
     chmod +x /usr/local/bin/gitreceive
 
 RUN mkdir /var/run/sshd
+RUN mkdir -p /repos && chmod 777 /repos
+
 COPY files/sshd_config /etc/ssh/
 
 RUN gitreceive init
