@@ -12,6 +12,7 @@ export ETCDCTL_ENDPOINT=http://$HOST_IP:2379
 REPOSITORY=$(echo "$1" | sed -e "s@\/@-@g")
 REVISION=$(echo "$2")
 USER_NAME=$(echo "$3")
+APP_NAME=$(echo $REPOSITORY | sed -e "s/$USER_NAME-//g")
 PROJECT_NAME=$REPOSITORY-$(echo $REVISION | awk '{ print substr($0, 0, 8) }')
 
 BASE_DOMAIN=`cat /base-domain`
@@ -123,7 +124,7 @@ echo "=====> $REPOSITORY was deployed at https://$domain/"
 domain=$(
   etcdctl set \
           /vulcand/frontends/$REPOSITORY/frontend \
-          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$REPOSITORY.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
+          "{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(\`$APP_NAME.$BASE_DOMAIN\`) && PathRegexp(\`/\`)\"}" \
     | jq -r .Route \
     | sed -E "s/Host\(\`(.+?)\`\).+/\1/"
       )
