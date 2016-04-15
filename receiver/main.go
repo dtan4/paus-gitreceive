@@ -60,8 +60,6 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
-	baseWorkingDir, _ := os.Getwd()
-
 	dockerHost := os.Getenv("DOCKER_HOST")
 
 	if dockerHost == "" {
@@ -82,7 +80,6 @@ func main() {
 
 	commitMetadata := NewCommitMetadataFromArgs(os.Args[1:])
 
-	fmt.Println(baseWorkingDir)
 	fmt.Println(commitMetadata.Repository)
 	fmt.Println(commitMetadata.Revision)
 	fmt.Println(commitMetadata.Username)
