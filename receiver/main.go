@@ -2,12 +2,13 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -16,6 +17,25 @@ const (
 	DefaultEtcdEndpoint  = "http://localhost:2379"
 	DefaultRepositoryDir = "/repos"
 )
+
+func runCommand(command *exec.Cmd) error {
+	stdout, err := command.StdoutPipe()
+
+	if err != nil {
+		return err
+	}
+
+	command.Start()
+	scanner := bufio.NewScanner(stdout)
+
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+
+	command.Wait()
+
+	return nil
+}
 
 func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
@@ -61,7 +81,7 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
-	workingDir, _ := os.Getwd()
+	baseWorkingDir, _ := os.Getwd()
 
 	dockerHost := os.Getenv("DOCKER_HOST")
 
@@ -83,7 +103,7 @@ func main() {
 
 	commitMetadata := NewCommitMetadataFromArgs(os.Args[1:])
 
-	fmt.Println(workingDir)
+	fmt.Println(baseWorkingDir)
 	fmt.Println(commitMetadata.Repository)
 	fmt.Println(commitMetadata.Revision)
 	fmt.Println(commitMetadata.Username)
@@ -93,8 +113,44 @@ func main() {
 	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.AppName, os.Stdin)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	fmt.Println(repositoryPath)
+
+	if err = os.Chdir(repositoryPath); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
+	if _, err = os.Stat("docker-compose.yml"); err != nil {
+		fmt.Fprintln(os.Stderr, "=====> docker-compose.yml was NOT found!")
+		os.Exit(1)
+	}
+
+	fmt.Println("=====> docker-compose.yml was found")
+
+	fmt.Println("=====> Building ...")
+	cmd := exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "build")
+
+	if err = runCommand(cmd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	fmt.Println("=====> Pulling ...")
+	cmd = exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "pull")
+
+	if err = runCommand(cmd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	fmt.Println("=====> Deploying ...")
+	cmd = exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "up", "-d")
+
+	if err = runCommand(cmd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
