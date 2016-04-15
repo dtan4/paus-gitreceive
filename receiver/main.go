@@ -141,4 +141,17 @@ func main() {
 	}
 
 	fmt.Println(webContainerId)
+
+	webContainer, err := NewContainer(dockerHost, webContainerId)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	webContainerHostIp := webContainer.HostIP()
+	webContainerHostPort := webContainer.HostPort()
+
+	fmt.Println(webContainerHostIp)
+	fmt.Println(webContainerHostPort)
 }
