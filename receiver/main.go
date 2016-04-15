@@ -2,13 +2,11 @@ package main
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -17,25 +15,6 @@ const (
 	DefaultEtcdEndpoint  = "http://localhost:2379"
 	DefaultRepositoryDir = "/repos"
 )
-
-func runCommand(command *exec.Cmd) error {
-	stdout, err := command.StdoutPipe()
-
-	if err != nil {
-		return err
-	}
-
-	command.Start()
-	scanner := bufio.NewScanner(stdout)
-
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
-
-	command.Wait()
-
-	return nil
-}
 
 func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
@@ -123,33 +102,33 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	if _, err = os.Stat("docker-compose.yml"); err != nil {
+	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
+
+	if _, err := os.Stat(composeFilePath); err != nil {
 		fmt.Fprintln(os.Stderr, "=====> docker-compose.yml was NOT found!")
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> docker-compose.yml was found")
+	compose := NewCompose(composeFilePath, commitMetadata.ProjectName)
 
 	fmt.Println("=====> Building ...")
-	cmd := exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "build")
 
-	if err = runCommand(cmd); err != nil {
+	if err = compose.Build(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> Pulling ...")
-	cmd = exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "pull")
 
-	if err = runCommand(cmd); err != nil {
+	if err = compose.Pull(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> Deploying ...")
-	cmd = exec.Command("docker-compose", "-p", commitMetadata.ProjectName, "up", "-d")
 
-	if err = runCommand(cmd); err != nil {
+	if err = compose.Up(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
