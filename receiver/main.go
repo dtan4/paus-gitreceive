@@ -18,6 +18,38 @@ const (
 	DefaultRepositoryDir = "/repos"
 )
 
+func deploy(commitMetadata *CommitMetadata, composeFilePath string) (string, error) {
+	var err error
+
+	compose := NewCompose(composeFilePath, commitMetadata.ProjectName)
+
+	fmt.Println("=====> Building ...")
+
+	if err = compose.Build(); err != nil {
+		return "", err
+	}
+
+	fmt.Println("=====> Pulling ...")
+
+	if err = compose.Pull(); err != nil {
+		return "", err
+	}
+
+	fmt.Println("=====> Deploying ...")
+
+	if err = compose.Up(); err != nil {
+		return "", err
+	}
+
+	webContainerId, err := compose.GetContainerId("web")
+
+	if err != nil {
+		return "", err
+	}
+
+	return webContainerId, nil
+}
+
 func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) error {
 	userDirectoryKey := "/paus/users/" + commitMetadata.Username
 
@@ -131,37 +163,12 @@ func main() {
 	}
 
 	fmt.Println("=====> docker-compose.yml was found")
-	compose := NewCompose(composeFilePath, commitMetadata.ProjectName)
-
-	fmt.Println("=====> Building ...")
-
-	if err = compose.Build(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	fmt.Println("=====> Pulling ...")
-
-	if err = compose.Pull(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	fmt.Println("=====> Deploying ...")
-
-	if err = compose.Up(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	webContainerId, err := compose.GetContainerId("web")
+	webContainerId, err := deploy(commitMetadata, composeFilePath)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	fmt.Println(webContainerId)
 
 	webContainer, err := NewContainer(dockerHost, webContainerId)
 
