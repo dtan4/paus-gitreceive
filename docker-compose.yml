@@ -1,0 +1,9 @@
+version: '2'
+services:
+  gitreceive:
+    build:
+      context: .
+    ports:
+      - "2222:22"
+    environment:
+      - PAUS_BASE_DOMAIN=pausapp.com
