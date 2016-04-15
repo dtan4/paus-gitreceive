@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 type Compose struct {
@@ -47,6 +48,16 @@ func (c *Compose) Build() error {
 	}
 
 	return nil
+}
+
+func (c *Compose) GetContainerId(service string) (string, error) {
+	out, err := exec.Command("docker-compose", "-p", c.projectName, "ps", "-q", service).Output()
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Replace(string(out), "\n", "", -1), nil
 }
 
 func (c *Compose) Pull() error {
