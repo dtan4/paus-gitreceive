@@ -72,6 +72,47 @@ func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) err
 	return nil
 }
 
+func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain string, webContainer *Container, etcd *Etcd) error {
+	vulcandDirectoryKeyBase := "/vulcand"
+
+	// {"Type": "http"}
+	if err := etcd.Set(vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/backend", "{\"Type\": \"http\"}"); err != nil {
+		return err
+	}
+
+	// {"URL": "http://$web_container_host_ip:$web_container_port"}
+	if err := etcd.Set(
+		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/servers/"+webContainer.ContainerId,
+		"{\"URL\": \"http://"+webContainer.HostIP()+":"+webContainer.HostPort()+"\"}",
+	); err != nil {
+		return err
+	}
+
+	// {"URL": "http://$web_container_host_ip:$web_container_port"}
+	if err := etcd.Set(
+		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+	); err != nil {
+		return err
+	}
+
+	if err := etcd.Set(
+		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.Username+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+	); err != nil {
+		return err
+	}
+
+	if err := etcd.Set(
+		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.AppName+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
 
@@ -116,6 +157,8 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
+	baseDomain := "pausapp.com"
+
 	dockerHost := os.Getenv("DOCKER_HOST")
 
 	if dockerHost == "" {
@@ -177,12 +220,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerHostIp := webContainer.HostIP()
-	webContainerHostPort := webContainer.HostPort()
-
-	fmt.Println(webContainerHostIp)
-	fmt.Println(webContainerHostPort)
-
 	etcd, err := NewEtcd(etcdEndpoint)
 
 	if err != nil {
@@ -191,6 +228,11 @@ func main() {
 	}
 
 	if err = registerApplicationMetadata(commitMetadata, etcd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err = registerVulcandInformation(commitMetadata, baseDomain, webContainer, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

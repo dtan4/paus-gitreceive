@@ -9,6 +9,7 @@ const (
 )
 
 type Container struct {
+	ContainerId   string
 	client        *docker.Client
 	containerInfo *docker.Container
 }
@@ -21,7 +22,7 @@ func NewContainer(dockerHost, containerId string) (*Container, error) {
 		return nil, err
 	}
 
-	return &Container{client, containerInfo}, nil
+	return &Container{containerId, client, containerInfo}, nil
 }
 
 func (c *Container) HostIP() string {
