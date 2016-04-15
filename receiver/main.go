@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 )
 
 const (
@@ -15,6 +17,28 @@ const (
 	DefaultEtcdEndpoint  = "http://localhost:2379"
 	DefaultRepositoryDir = "/repos"
 )
+
+func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) error {
+	userDirectoryKey := "/paus/users/" + commitMetadata.Username
+
+	if etcd.HasKey(userDirectoryKey) {
+		_ = etcd.Mkdir(userDirectoryKey)
+	}
+
+	appDirectoryKey := userDirectoryKey + "/" + commitMetadata.AppName
+
+	if etcd.HasKey(appDirectoryKey) {
+		_ = etcd.Mkdir(appDirectoryKey)
+		_ = etcd.Mkdir(appDirectoryKey + "/envs")
+		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
+	}
+
+	if err := etcd.Set(appDirectoryKey+"/revisions/"+commitMetadata.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
@@ -151,4 +175,16 @@ func main() {
 
 	fmt.Println(webContainerHostIp)
 	fmt.Println(webContainerHostPort)
+
+	etcd, err := NewEtcd(etcdEndpoint)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err = registerApplicationMetadata(commitMetadata, etcd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

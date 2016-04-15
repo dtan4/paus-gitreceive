@@ -1,3 +1,6 @@
 package: github.com/dtan4/paus-gitreceive/receiver
 import:
 - package: github.com/fsouza/go-dockerclient
+- package: github.com/coreos/etcd
+  subpackages:
+  - client
