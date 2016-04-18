@@ -53,3 +53,17 @@ func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string
 func (c *ComposeFile) IsVersion2() bool {
 	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
 }
+
+func (c *ComposeFile) SaveAs(filePath string) error {
+	data, err := yaml.Marshal(c.Yaml)
+
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}

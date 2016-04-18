@@ -23,6 +23,12 @@ func contains(slice []interface{}, item string) bool {
 	return ok
 }
 
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+
+	return err == nil
+}
+
 func setup() {
 	workingDir, _ := os.Getwd()
 
@@ -92,4 +98,24 @@ func TestIsVersion2(t *testing.T) {
 	if !V2ComposeFile.IsVersion2() {
 		t.Fatalf(V2FilePath + " is actually based on Compose File Version 2.")
 	}
+}
+
+func TestSaveAs(t *testing.T) {
+	setup()
+
+	newFilePath := filepath.Join("/tmp", "new-docker-compose.yml")
+
+	if fileExists(newFilePath) {
+		os.Remove(newFilePath)
+	}
+
+	if err := V1ComposeFile.SaveAs(newFilePath); err != nil {
+		t.Fatalf("SaveAs() fails: %s", err.Error())
+	}
+
+	if !fileExists(newFilePath) {
+		t.Fatalf("SaveAs() does not create %s", newFilePath)
+	}
+
+	os.Remove(newFilePath)
 }
