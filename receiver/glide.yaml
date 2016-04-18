@@ -4,3 +4,4 @@ import:
 - package: github.com/coreos/etcd
   subpackages:
   - client
+- package: gopkg.in/yaml.v2
