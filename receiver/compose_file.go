@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -28,6 +29,22 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 	return &ComposeFile{composeFilePath, m}, nil
 }
 
+func (c *ComposeFile) environment(service map[interface{}]interface{}) []interface{} {
+	return service["environment"].([]interface{})
+}
+
+func (c *ComposeFile) environmentMap(environment []interface{}) map[string]string {
+	result := map[string]string{}
+
+	for _, envString := range environment {
+		splited := strings.Split(envString.(string), "=")
+		key, value := splited[0], strings.Join(splited[1:], "=")
+		result[key] = value
+	}
+
+	return result
+}
+
 func (c *ComposeFile) isVersion2() bool {
 	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
 }
@@ -44,14 +61,21 @@ func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string
 	var envString string
 
 	webService := c.service("web")
-	environment := webService["environment"].([]interface{})
+	environment := c.environment(webService)
+	environmentMap := c.environmentMap(environment)
 
 	for key, value := range environmentVariables {
-		envString = key + "=" + value
-		environment = append(environment, envString)
+		environmentMap[key] = value
 	}
 
-	webService["environment"] = environment
+	newEnvironment := []interface{}{}
+
+	for key, value := range environmentMap {
+		envString = key + "=" + value
+		newEnvironment = append(newEnvironment, envString)
+	}
+
+	webService["environment"] = newEnvironment
 }
 
 func (c *ComposeFile) SaveAs(filePath string) error {

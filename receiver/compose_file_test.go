@@ -64,6 +64,10 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 		}
 	}
 
+	if !contains(webEnvironment, "DATABASE_HOST=db") {
+		t.Fatalf("Original string DATABASE_HOST=db is dismissed. environments: %v", V1ComposeFile.Yaml["web"].(map[interface{}]interface{})["environment"].([]interface{}))
+	}
+
 	V2ComposeFile.InjectEnvironmentVariables(environmentVariables)
 	webEnvironment = V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["environment"].([]interface{})
 
@@ -81,10 +85,16 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 
 	V2ComposeFile.InjectEnvironmentVariables(environmentVariables)
 	webEnvironment = V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["environment"].([]interface{})
-	envString = "FOO=hogefugapiyo"
 
-	if !contains(webEnvironment, envString) {
-		t.Fatalf("Failed to update existing key FOO. expected: hogefugapiyo, actual: %v", webEnvironment)
+	oldEnvString := "FOO=hoge"
+	newEnvString := "FOO=hogefugapiyo"
+
+	if contains(webEnvironment, oldEnvString) {
+		t.Fatalf("Failed to update existing key FOO. %s still exists.", oldEnvString)
+	}
+
+	if !contains(webEnvironment, newEnvString) {
+		t.Fatalf("Failed to update existing key FOO. %s does not exist.", newEnvString)
 	}
 }
 
