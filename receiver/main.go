@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -48,6 +49,48 @@ func deploy(commitMetadata *CommitMetadata, composeFilePath string) (string, err
 	}
 
 	return webContainerId, nil
+}
+
+func injectEnvironmentVariables(commitMetadata *CommitMetadata, composeFile *ComposeFile, etcd *Etcd) error {
+	userDirectoryKey := "/paus/users/" + commitMetadata.Username
+
+	if !etcd.HasKey(userDirectoryKey) {
+		return nil
+	}
+
+	appDirectoryKey := userDirectoryKey + "/" + commitMetadata.AppName
+
+	if !etcd.HasKey(appDirectoryKey) {
+		return nil
+	}
+
+	envDirectoryKey := appDirectoryKey + "/envs/"
+
+	if !etcd.HasKey(envDirectoryKey) {
+		return nil
+	}
+
+	envKeys, err := etcd.List(envDirectoryKey, false)
+
+	if err != nil {
+		return err
+	}
+
+	environmentVariables := map[string]string{}
+
+	for _, key := range envKeys {
+		value, err := etcd.Get(key)
+
+		if err != nil {
+			return err
+		}
+
+		environmentVariables[strings.Replace(key, envDirectoryKey, "", 1)] = value
+	}
+
+	composeFile.InjectEnvironmentVariables(environmentVariables)
+
+	return nil
 }
 
 func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) error {
@@ -115,7 +158,7 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 	return nil
 }
 
-func removeUnpackedFiles(repositoryPath string) error {
+func removeUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
 
 	if err != nil {
@@ -123,7 +166,7 @@ func removeUnpackedFiles(repositoryPath string) error {
 	}
 
 	for _, file := range files {
-		if file.Name() != "docker-compose.yml" {
+		if filepath.Join(repositoryPath, file.Name()) != newComposeFilePath {
 			if err = os.RemoveAll(filepath.Join(repositoryPath, file.Name())); err != nil {
 				return err
 			}
@@ -217,14 +260,7 @@ func main() {
 	}
 
 	fmt.Println("=====> docker-compose.yml was found")
-	webContainerId, err := deploy(commitMetadata, composeFilePath)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	webContainer, err := ContainerFromID(dockerHost, webContainerId)
+	composeFile, err := NewComposeFile(composeFilePath)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -232,6 +268,32 @@ func main() {
 	}
 
 	etcd, err := NewEtcd(etcdEndpoint)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err = injectEnvironmentVariables(commitMetadata, composeFile, etcd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
+
+	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	webContainerId, err := deploy(commitMetadata, newComposeFilePath)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	webContainer, err := ContainerFromID(dockerHost, webContainerId)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -260,7 +322,7 @@ func main() {
 		fmt.Println("         " + url)
 	}
 
-	if err = removeUnpackedFiles(repositoryPath); err != nil {
+	if err = removeUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
