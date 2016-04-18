@@ -1,0 +1,38 @@
+hash: c7666cdb4136cf27bdc7a3ba647383156858ffef398476397f21556d2fdae0b6
+updated: 2016-04-15T18:48:03.426504968+09:00
+imports:
+- name: github.com/coreos/etcd
+  version: 4ee7cad116c74c1cc8ce88487a7d9284036da894
+  subpackages:
+  - client
+  - pkg/pathutil
+  - pkg/types
+- name: github.com/fsouza/go-dockerclient
+  version: 23c589186c2a92a8742da55f19aec4997dae5cbb
+  subpackages:
+  - external/github.com/docker/docker/opts
+  - external/github.com/docker/docker/pkg/archive
+  - external/github.com/docker/docker/pkg/fileutils
+  - external/github.com/docker/docker/pkg/homedir
+  - external/github.com/docker/docker/pkg/stdcopy
+  - external/github.com/docker/go-units
+  - external/github.com/hashicorp/go-cleanhttp
+  - external/github.com/Sirupsen/logrus
+  - external/github.com/docker/docker/pkg/idtools
+  - external/github.com/docker/docker/pkg/ioutils
+  - external/github.com/docker/docker/pkg/pools
+  - external/github.com/docker/docker/pkg/promise
+  - external/github.com/docker/docker/pkg/system
+  - external/github.com/docker/docker/pkg/longpath
+  - external/github.com/opencontainers/runc/libcontainer/user
+  - external/golang.org/x/sys/unix
+  - external/golang.org/x/net/context
+- name: github.com/ugorji/go
+  version: a396ed22fc049df733440d90efe17475e3929ccb
+  subpackages:
+  - codec
+- name: golang.org/x/net
+  version: fb93926129b8ec0056f2f458b1f519654814edf0
+  subpackages:
+  - context
+devImports: []
