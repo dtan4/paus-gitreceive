@@ -90,21 +90,21 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 
 	// {"URL": "http://$web_container_host_ip:$web_container_port"}
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/frontend",
+		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.ProjectName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
 	}
 
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.Username+"/frontend",
+		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.Username+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
 	}
 
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.AppName+"/frontend",
+		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.AppName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \"$PROJECT_NAME\", \"Route\": \"Host(`"+commitMetadata.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
