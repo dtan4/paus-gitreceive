@@ -88,18 +88,6 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 	}
 }
 
-func TestIsVersion2(t *testing.T) {
-	setup()
-
-	if V1ComposeFile.IsVersion2() {
-		t.Fatalf(V1FilePath + " is actually not based on Compose File Version 2.")
-	}
-
-	if !V2ComposeFile.IsVersion2() {
-		t.Fatalf(V2FilePath + " is actually based on Compose File Version 2.")
-	}
-}
-
 func TestSaveAs(t *testing.T) {
 	setup()
 

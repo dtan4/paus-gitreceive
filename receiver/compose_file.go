@@ -28,8 +28,12 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 	return &ComposeFile{composeFilePath, m}, nil
 }
 
+func (c *ComposeFile) isVersion2() bool {
+	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
+}
+
 func (c *ComposeFile) webService() map[interface{}]interface{} {
-	if c.IsVersion2() {
+	if c.isVersion2() {
 		return c.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})
 	}
 
@@ -48,10 +52,6 @@ func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string
 	}
 
 	webService["environment"] = environment
-}
-
-func (c *ComposeFile) IsVersion2() bool {
-	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
 }
 
 func (c *ComposeFile) SaveAs(filePath string) error {
