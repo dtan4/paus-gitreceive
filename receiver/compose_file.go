@@ -32,18 +32,18 @@ func (c *ComposeFile) isVersion2() bool {
 	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
 }
 
-func (c *ComposeFile) webService() map[interface{}]interface{} {
+func (c *ComposeFile) service(serviceName string) map[interface{}]interface{} {
 	if c.isVersion2() {
-		return c.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})
+		return c.Yaml["services"].(map[interface{}]interface{})[serviceName].(map[interface{}]interface{})
 	}
 
-	return c.Yaml["web"].(map[interface{}]interface{})
+	return c.Yaml[serviceName].(map[interface{}]interface{})
 }
 
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
 	var envString string
 
-	webService := c.webService()
+	webService := c.service("web")
 	environment := webService["environment"].([]interface{})
 
 	for key, value := range environmentVariables {
