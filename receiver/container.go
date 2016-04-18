@@ -14,7 +14,7 @@ type Container struct {
 	containerInfo *docker.Container
 }
 
-func NewContainer(dockerHost, containerId string) (*Container, error) {
+func ContainerFromID(dockerHost, containerId string) (*Container, error) {
 	client, _ := docker.NewClient(dockerHost)
 	containerInfo, err := client.InspectContainer(containerId)
 

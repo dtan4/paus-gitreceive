@@ -206,7 +206,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainer, err := NewContainer(dockerHost, webContainerId)
+	webContainer, err := ContainerFromID(dockerHost, webContainerId)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
