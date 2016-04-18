@@ -88,7 +88,7 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 		return err
 	}
 
-	// {"URL": "http://$web_container_host_ip:$web_container_port"}
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$PROJECT_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.ProjectName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
@@ -96,6 +96,7 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 		return err
 	}
 
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$USER_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.Username+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
@@ -103,6 +104,7 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 		return err
 	}
 
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$APP_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.AppName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
