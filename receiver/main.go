@@ -236,4 +236,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	urlList := []string{
+		"http://" + commitMetadata.ProjectName + "." + baseDomain,
+		"http://" + commitMetadata.Username + "." + baseDomain,
+		"http://" + commitMetadata.AppName + "." + baseDomain,
+	}
+
+	fmt.Println("=====> " + commitMetadata.Repository + " was successfully deployed at:")
+
+	for _, url := range urlList {
+		fmt.Println("         " + url)
+	}
 }
