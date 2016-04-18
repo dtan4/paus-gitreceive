@@ -8,7 +8,7 @@ import (
 
 type ComposeFile struct {
 	filePath string
-	yaml     map[interface{}]interface{}
+	Yaml     map[interface{}]interface{}
 }
 
 func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
@@ -28,6 +28,28 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 	return &ComposeFile{composeFilePath, m}, nil
 }
 
+func (c *ComposeFile) webService() map[interface{}]interface{} {
+	if c.IsVersion2() {
+		return c.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})
+	}
+
+	return c.Yaml["web"].(map[interface{}]interface{})
+}
+
+func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
+	var envString string
+
+	webService := c.webService()
+	environment := webService["environment"].([]interface{})
+
+	for key, value := range environmentVariables {
+		envString = key + "=" + value
+		environment = append(environment, envString)
+	}
+
+	webService["environment"] = environment
+}
+
 func (c *ComposeFile) IsVersion2() bool {
-	return c.yaml["version"] != nil && c.yaml["version"] == "2"
+	return c.Yaml["version"] != nil && c.Yaml["version"] == "2"
 }
