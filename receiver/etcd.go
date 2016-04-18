@@ -42,6 +42,22 @@ func (c *Etcd) HasKey(key string) bool {
 	return err == nil
 }
 
+func (c *Etcd) List(key string, recursive bool) ([]string, error) {
+	result := []string{}
+
+	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{Recursive: recursive})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range resp.Node.Nodes {
+		result = append(result, node.Key)
+	}
+
+	return result, nil
+}
+
 func (c *Etcd) Mkdir(key string) error {
 	_, err := c.keysAPI.Set(context.Background(), key, "", &client.SetOptions{Dir: true})
 
