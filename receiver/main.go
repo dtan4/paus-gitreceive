@@ -180,7 +180,7 @@ func main() {
 	}
 
 	commitMetadata := CommitMetadataFromArgs(os.Args[1:])
-	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.AppName, os.Stdin)
+	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.ProjectName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
