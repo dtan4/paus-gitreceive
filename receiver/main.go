@@ -115,6 +115,24 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 	return nil
 }
 
+func removeUnpackedFiles(repositoryPath string) error {
+	files, err := ioutil.ReadDir(repositoryPath)
+
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if file.Name() != "docker-compose.yml" {
+			if err = os.RemoveAll(filepath.Join(repositoryPath, file.Name())); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
 
@@ -240,5 +258,10 @@ func main() {
 
 	for _, url := range urlList {
 		fmt.Println("         " + url)
+	}
+
+	if err = removeUnpackedFiles(repositoryPath); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
