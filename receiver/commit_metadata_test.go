@@ -17,7 +17,7 @@ func TestNewCommitMetadataFromArgs(t *testing.T) {
 	expectedAppName := "rails-sample"
 	expectedProjectName := "dtan4-rails-sample-3e634e41"
 
-	commitMetadata := NewCommitMetadataFromArgs(args)
+	commitMetadata := CommitMetadataFromArgs(args)
 
 	if expectedRepository != commitMetadata.Repository {
 		t.Fatalf("Repository is not matched. Expected: %s, Actual: %s", expectedRepository, commitMetadata.Repository)
