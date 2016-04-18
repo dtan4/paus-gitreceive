@@ -12,7 +12,7 @@ type CommitMetadata struct {
 	ProjectName string
 }
 
-func NewCommitMetadataFromArgs(args []string) *CommitMetadata {
+func CommitMetadataFromArgs(args []string) *CommitMetadata {
 	repository := strings.Replace(args[0], "/", "-", -1)
 	revision := args[1]
 	username := args[2]

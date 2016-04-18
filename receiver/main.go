@@ -179,7 +179,7 @@ func main() {
 		repositoryDir = DefaultRepositoryDir
 	}
 
-	commitMetadata := NewCommitMetadataFromArgs(os.Args[1:])
+	commitMetadata := CommitMetadataFromArgs(os.Args[1:])
 	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.AppName, os.Stdin)
 
 	if err != nil {
