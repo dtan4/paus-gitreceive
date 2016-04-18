@@ -41,7 +41,7 @@ func NewCompose(composeFilePath, projectName string) *Compose {
 }
 
 func (c *Compose) Build() error {
-	cmd := exec.Command("docker-compose", "-p", c.projectName, "build")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "build")
 
 	if err := runCommand(cmd); err != nil {
 		return err
@@ -51,7 +51,7 @@ func (c *Compose) Build() error {
 }
 
 func (c *Compose) GetContainerId(service string) (string, error) {
-	out, err := exec.Command("docker-compose", "-p", c.projectName, "ps", "-q", service).Output()
+	out, err := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "ps", "-q", service).Output()
 
 	if err != nil {
 		return "", err
@@ -61,7 +61,7 @@ func (c *Compose) GetContainerId(service string) (string, error) {
 }
 
 func (c *Compose) Pull() error {
-	cmd := exec.Command("docker-compose", "-p", c.projectName, "pull")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "pull")
 
 	if err := runCommand(cmd); err != nil {
 		return err
@@ -71,7 +71,7 @@ func (c *Compose) Pull() error {
 }
 
 func (c *Compose) Up() error {
-	cmd := exec.Command("docker-compose", "-p", c.projectName, "up", "-d")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "up", "-d")
 
 	if err := runCommand(cmd); err != nil {
 		return err

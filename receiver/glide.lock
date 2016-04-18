@@ -1,14 +1,14 @@
-hash: c7666cdb4136cf27bdc7a3ba647383156858ffef398476397f21556d2fdae0b6
-updated: 2016-04-15T18:48:03.426504968+09:00
+hash: cd105316c837ab220a71bb9274991162f7a8766b7494f2346b7e6f6177a96880
+updated: 2016-04-18T14:52:12.08358811+09:00
 imports:
 - name: github.com/coreos/etcd
-  version: 4ee7cad116c74c1cc8ce88487a7d9284036da894
+  version: ea6a747fc1d9bb6a38e84d47020732630755cb8c
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
 - name: github.com/fsouza/go-dockerclient
-  version: 23c589186c2a92a8742da55f19aec4997dae5cbb
+  version: ff3d4ee4753705a048db1855113026395c26a79a
   subpackages:
   - external/github.com/docker/docker/opts
   - external/github.com/docker/docker/pkg/archive
@@ -35,4 +35,6 @@ imports:
   version: fb93926129b8ec0056f2f458b1f519654814edf0
   subpackages:
   - context
+- name: gopkg.in/yaml.v2
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
 devImports: []
