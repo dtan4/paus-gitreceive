@@ -180,21 +180,12 @@ func main() {
 	}
 
 	commitMetadata := NewCommitMetadataFromArgs(os.Args[1:])
-
-	fmt.Println(commitMetadata.Repository)
-	fmt.Println(commitMetadata.Revision)
-	fmt.Println(commitMetadata.Username)
-	fmt.Println(commitMetadata.AppName)
-	fmt.Println(commitMetadata.ProjectName)
-
 	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.AppName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	fmt.Println(repositoryPath)
 
 	if err = os.Chdir(repositoryPath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
