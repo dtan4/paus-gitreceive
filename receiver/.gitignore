@@ -27,7 +27,9 @@ _testmain.go
 *.test
 *.prof
 
-receiver
+bin/*
+!bin/.keep
+
 tmp
 
 vendor
