@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-type CommitMetadata struct {
+type Application struct {
 	Repository  string
 	Revision    string
 	Username    string
@@ -12,14 +12,14 @@ type CommitMetadata struct {
 	ProjectName string
 }
 
-func CommitMetadataFromArgs(args []string) *CommitMetadata {
+func ApplicationFromArgs(args []string) *Application {
 	repository := strings.Replace(args[0], "/", "-", -1)
 	revision := args[1]
 	username := args[2]
 	appName := strings.Replace(repository, username+"-", "", 1)
 	projectName := repository + "-" + revision[0:8]
 
-	return &CommitMetadata{
+	return &Application{
 		repository,
 		revision,
 		username,
