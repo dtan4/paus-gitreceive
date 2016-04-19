@@ -220,7 +220,12 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
-	baseDomain := "pausapp.com"
+	baseDomain := os.Getenv("PAUS_BASE_DOMAIN")
+
+	if baseDomain == "" {
+		fmt.Fprintln(os.Stderr, "PAUS_BASE_DOMAIN is not set")
+		os.Exit(1)
+	}
 
 	dockerHost := os.Getenv("DOCKER_HOST")
 
