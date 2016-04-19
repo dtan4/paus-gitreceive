@@ -19,10 +19,10 @@ const (
 	DefaultRepositoryDir = "/repos"
 )
 
-func deploy(commitMetadata *CommitMetadata, composeFilePath string) (string, error) {
+func deploy(application *Application, composeFilePath string) (string, error) {
 	var err error
 
-	compose := NewCompose(composeFilePath, commitMetadata.ProjectName)
+	compose := NewCompose(composeFilePath, application.ProjectName)
 
 	fmt.Println("=====> Building ...")
 
@@ -51,14 +51,14 @@ func deploy(commitMetadata *CommitMetadata, composeFilePath string) (string, err
 	return webContainerId, nil
 }
 
-func injectEnvironmentVariables(commitMetadata *CommitMetadata, composeFile *ComposeFile, etcd *Etcd) error {
-	userDirectoryKey := "/paus/users/" + commitMetadata.Username
+func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
+	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
 		return nil
 	}
 
-	appDirectoryKey := userDirectoryKey + "/" + commitMetadata.AppName
+	appDirectoryKey := userDirectoryKey + "/" + application.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
 		return nil
@@ -93,14 +93,14 @@ func injectEnvironmentVariables(commitMetadata *CommitMetadata, composeFile *Com
 	return nil
 }
 
-func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) error {
-	userDirectoryKey := "/paus/users/" + commitMetadata.Username
+func registerApplicationMetadata(application *Application, etcd *Etcd) error {
+	userDirectoryKey := "/paus/users/" + application.Username
 
 	if etcd.HasKey(userDirectoryKey) {
 		_ = etcd.Mkdir(userDirectoryKey)
 	}
 
-	appDirectoryKey := userDirectoryKey + "/" + commitMetadata.AppName
+	appDirectoryKey := userDirectoryKey + "/" + application.AppName
 
 	if etcd.HasKey(appDirectoryKey) {
 		_ = etcd.Mkdir(appDirectoryKey)
@@ -108,24 +108,24 @@ func registerApplicationMetadata(commitMetadata *CommitMetadata, etcd *Etcd) err
 		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
 	}
 
-	if err := etcd.Set(appDirectoryKey+"/revisions/"+commitMetadata.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := etcd.Set(appDirectoryKey+"/revisions/"+application.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain string, webContainer *Container, etcd *Etcd) error {
+func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *Etcd) error {
 	vulcandDirectoryKeyBase := "/vulcand"
 
 	// {"Type": "http"}
-	if err := etcd.Set(vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/backend", "{\"Type\": \"http\"}"); err != nil {
+	if err := etcd.Set(vulcandDirectoryKeyBase+"/backends/"+application.ProjectName+"/backend", "{\"Type\": \"http\"}"); err != nil {
 		return err
 	}
 
 	// {"URL": "http://$web_container_host_ip:$web_container_port"}
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/backends/"+commitMetadata.ProjectName+"/servers/"+webContainer.ContainerId,
+		vulcandDirectoryKeyBase+"/backends/"+application.ProjectName+"/servers/"+webContainer.ContainerId,
 		"{\"URL\": \"http://"+webContainer.HostIP()+":"+webContainer.HostPort()+"\"}",
 	); err != nil {
 		return err
@@ -133,24 +133,24 @@ func registerVulcandInformation(commitMetadata *CommitMetadata, baseDomain strin
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$PROJECT_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.ProjectName+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		vulcandDirectoryKeyBase+"/frontends/"+application.ProjectName+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
 	}
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$USER_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.Username+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		vulcandDirectoryKeyBase+"/frontends/"+application.Username+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
 	}
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$APP_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
 	if err := etcd.Set(
-		vulcandDirectoryKeyBase+"/frontends/"+commitMetadata.AppName+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+commitMetadata.ProjectName+"\", \"Route\": \"Host(`"+commitMetadata.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		vulcandDirectoryKeyBase+"/frontends/"+application.AppName+"/frontend",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
 		return err
 	}
@@ -245,8 +245,8 @@ func main() {
 		repositoryDir = DefaultRepositoryDir
 	}
 
-	commitMetadata := CommitMetadataFromArgs(os.Args[1:])
-	repositoryPath, err := unpackReceivedFiles(repositoryDir, commitMetadata.Username, commitMetadata.ProjectName, os.Stdin)
+	application := ApplicationFromArgs(os.Args[1:])
+	repositoryPath, err := unpackReceivedFiles(repositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -279,7 +279,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = injectEnvironmentVariables(commitMetadata, composeFile, etcd); err != nil {
+	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -291,7 +291,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerId, err := deploy(commitMetadata, newComposeFilePath)
+	webContainerId, err := deploy(application, newComposeFilePath)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -305,23 +305,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = registerApplicationMetadata(commitMetadata, etcd); err != nil {
+	if err = registerApplicationMetadata(application, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	if err = registerVulcandInformation(commitMetadata, baseDomain, webContainer, etcd); err != nil {
+	if err = registerVulcandInformation(application, baseDomain, webContainer, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	urlList := []string{
-		"http://" + commitMetadata.ProjectName + "." + baseDomain,
-		"http://" + commitMetadata.Username + "." + baseDomain,
-		"http://" + commitMetadata.AppName + "." + baseDomain,
+		"http://" + application.ProjectName + "." + baseDomain,
+		"http://" + application.Username + "." + baseDomain,
+		"http://" + application.AppName + "." + baseDomain,
 	}
 
-	fmt.Println("=====> " + commitMetadata.Repository + " was successfully deployed at:")
+	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
 
 	for _, url := range urlList {
 		fmt.Println("         " + url)
