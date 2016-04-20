@@ -274,12 +274,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Println("=====> Application container is launched.")
+
 	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	fmt.Println("=====> Registering metadata ...")
 
 	if err = registerApplicationMetadata(application, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
