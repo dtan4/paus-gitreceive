@@ -11,7 +11,7 @@ import (
 
 const (
 	ConfigPrefix   = "paus"
-	ConfigFilePath = "/root/paus/config"
+	ConfigFilePath = "/paus/config"
 )
 
 var (

@@ -13,10 +13,10 @@ import (
 	"time"
 )
 
-func deploy(application *Application, composeFilePath string) (string, error) {
+func deploy(dockerHost string, application *Application, composeFilePath string) (string, error) {
 	var err error
 
-	compose := NewCompose(composeFilePath, application.ProjectName)
+	compose := NewCompose(dockerHost, composeFilePath, application.ProjectName)
 
 	fmt.Println("=====> Building ...")
 
@@ -267,12 +267,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerId, err := deploy(application, newComposeFilePath)
+	webContainerId, err := deploy(config.DockerHost, application, newComposeFilePath)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	fmt.Println("=====> Application container is launched.")
 
 	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
 
@@ -280,6 +282,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	fmt.Println("=====> Registering metadata ...")
 
 	if err = registerApplicationMetadata(application, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)

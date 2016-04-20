@@ -5,11 +5,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
 
 type Compose struct {
+	dockerHost      string
 	composeFilePath string
 	projectName     string
 }
@@ -33,8 +35,9 @@ func runCommand(command *exec.Cmd) error {
 	return nil
 }
 
-func NewCompose(composeFilePath, projectName string) *Compose {
+func NewCompose(dockerHost, composeFilePath, projectName string) *Compose {
 	return &Compose{
+		dockerHost,
 		composeFilePath,
 		projectName,
 	}
@@ -42,6 +45,7 @@ func NewCompose(composeFilePath, projectName string) *Compose {
 
 func (c *Compose) Build() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "build")
+	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
 		return err
@@ -51,7 +55,9 @@ func (c *Compose) Build() error {
 }
 
 func (c *Compose) GetContainerId(service string) (string, error) {
-	out, err := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "ps", "-q", service).Output()
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "ps", "-q", service)
+	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
+	out, err := cmd.Output()
 
 	if err != nil {
 		return "", err
@@ -62,6 +68,7 @@ func (c *Compose) GetContainerId(service string) (string, error) {
 
 func (c *Compose) Pull() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "pull")
+	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
 		return err
@@ -72,6 +79,7 @@ func (c *Compose) Pull() error {
 
 func (c *Compose) Up() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "up", "-d")
+	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
 		return err
