@@ -12,3 +12,12 @@ paus-gitreceive does:
 - Build Docker image from `Dockerfile` in the repository
 - Deploy application using [Docker Compose](https://docs.docker.com/compose/)
 - Register application metadata and [Vulcand](https://github.com/vulcand/vulcand) routing information in etcd
+
+## Environment variables
+
+| Key                  | Required | Description                                    | Default                 | Example                 |
+|----------------------|----------|------------------------------------------------|-------------------------|-------------------------|
+| `PAUS_BASE_DOMAIN`   | Required | Base domain for application URL                |                         | `pausapp.com`           |
+| `PAUS_DOCKER_HOST` |          | Endpoint of Docker daemon                       | `tcp://127.0.0.1:2375` | `tcp://127.0.0.1:2377` (Docker Swarm) |
+| `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
+| `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos/`                   | `/repos`                  |
