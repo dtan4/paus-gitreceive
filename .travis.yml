@@ -10,6 +10,8 @@ install:
   - make deps
 script:
   - make test
+before_deploy:
+  - cd $TRAVIS_BUILD_DIR
 deploy:
   provider: script
   script: make ci-docker-release
