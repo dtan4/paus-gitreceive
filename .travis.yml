@@ -19,7 +19,7 @@ deploy:
   provider: script
   script: make ci-docker-release
   on:
-    branch: release-setup
+    branch: master
     go: '1.6'
 notifications:
   slack:
