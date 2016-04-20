@@ -10,6 +10,12 @@ install:
   - make deps
 script:
   - make test
+deploy:
+  provider: script
+  script: make ci-docker-release
+  on:
+    branch: release-setup
+    go: '1.6'
 notifications:
   slack:
     secure: tTWTEiaUolmzk1eIvo/iZyi8VvszCb9MTekncQY5rYEpx+SKSvUXhegOUwSfwYFmomyaEmcVsZHU5ny9HJADJJoA74/Ofm8uK5EEs9yZiSpI5BkLbPb9Lo//FONci3A8YE07Ff03zZgFg1vbh5/f8zU7sdlAvJKLWvv0nuB8zdwq4q85CvTpnwtlb9MaRzApvJi4RdS5VLPRi651W63lhKGTQ1H64hf5KT4bO4yJDSTnm9qk6xc+z6x7VtUWM6xxo7R8PhhhcaNbxBsot282JVe/ArWOD6QxIhVRSQXj+BMX0Ej6q8VM1vjRjfgqly+Zzri7yl9kyKB9s6cyvExLnCSfQ2RogJdiTyotmgaeMldsk7PyF/DnaqWBaBu/syYPOlUnqV1BZGtIpzeTBlEUSN5H8p8mLCKSx4zkwuUt1BuIYNXIpP7/3b7IQnOXNxYY4xNHoBXV/z3hrmiB4YyJM901Ml+WHKBh0h79HWNK1eTzHsrcyrL7GF5qJPo91u/PD3rkQZjRtnmj+fJb5lM+fVpNOXVgHi65u7ZYJCOpZJj/f3cYBa6MRcd0h/7zY8qOi5/bb1xUNMOKAFDEYIZwKX4BodH7VCM0Nyr1UYCBNcDPqcN9tUcX/adxy4sNjvoGjf6Zz21eo2iC0MG6JsXUOWQzO7LQusozGl/ZYuR3Xyg=
