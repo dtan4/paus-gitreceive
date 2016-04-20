@@ -30,12 +30,6 @@ type Config struct {
 	RepositoryDir string `envconfig:"repository_dir" default:"/repos"`
 }
 
-func fileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
-
-	return err == nil
-}
-
 func loadConfigFromFile(filePath string) (map[string]string, error) {
 	config := map[string]string{}
 
@@ -73,7 +67,7 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	if !fileExists(ConfigFilePath) {
+	if _, err := os.Stat(ConfigFilePath); err != nil {
 		return &config, nil
 	}
 
