@@ -10,6 +10,6 @@ services:
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
     ports:
-      - 8080
+      - "80:8080"
     links:
       - db

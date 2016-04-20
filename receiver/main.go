@@ -260,6 +260,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	composeFile.RewritePortBindings()
 	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
 	if err = composeFile.SaveAs(newComposeFilePath); err != nil {

@@ -98,6 +98,24 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 	}
 }
 
+func TestRewritePortBindings(t *testing.T) {
+	setup()
+
+	V1ComposeFile.RewritePortBindings()
+	v1Ports := V1ComposeFile.Yaml["web"].(map[interface{}]interface{})["ports"].([]interface{})
+
+	if len(v1Ports) != 1 || v1Ports[0] != "8080" {
+		t.Fatalf("Failed to rewrite ports. Expect: [8080], actual: %v", v1Ports)
+	}
+
+	V2ComposeFile.RewritePortBindings()
+	v2Ports := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["ports"].([]interface{})
+
+	if len(v2Ports) != 1 || v2Ports[0] != "8080" {
+		t.Fatalf("Failed to rewrite ports. Expect: [8080], actual: %v", v2Ports)
+	}
+}
+
 func TestSaveAs(t *testing.T) {
 	setup()
 
