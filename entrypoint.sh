@@ -5,29 +5,29 @@ if [ ! -d /home/git/.ssh ]; then
   chown -R git /home/git/.ssh
 fi
 
-if [ ! -d /root/paus ]; then
-  mkdir -p /root/paus
+if [ ! -d /paus ]; then
+  mkdir -p /paus
 fi
 
-touch /root/paus/config
+touch /paus/config
 
 if [ -n "$PAUS_BASE_DOMAIN" ]; then
-  echo "BaseDomain=$PAUS_BASE_DOMAIN" >> /root/paus/config
+  echo "BaseDomain=$PAUS_BASE_DOMAIN" >> /paus/config
 else
   echo "required key PAUS_BASE_DOMAIN missing value"
   exit 1
 fi
 
 if [ -n "$PAUS_DOCKER_HOST" ]; then
-  echo "DockerHost=$PAUS_DOCKER_HOST" >> /root/paus/config
+  echo "DockerHost=$PAUS_DOCKER_HOST" >> /paus/config
 fi
 
 if [ -n "$PAUS_ETCD_ENDPOINT" ]; then
-  echo "EtcdEndpoint=$PAUS_ETCD_ENDPOINT" >> /root/paus/config
+  echo "EtcdEndpoint=$PAUS_ETCD_ENDPOINT" >> /paus/config
 fi
 
 if [ -n "$PAUS_REPOSITORY_DIR" ]; then
-  echo "RepositoryDir=$PAUS_REPOSITORY_DIR" >> /root/paus/config
+  echo "RepositoryDir=$PAUS_REPOSITORY_DIR" >> /paus/config
   chown -R git:git $PAUS_REPOSITORY_DIR
 fi
 
