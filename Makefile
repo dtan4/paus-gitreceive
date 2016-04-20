@@ -6,4 +6,4 @@ docker-build-release:
 	cd receiver; make build-linux
 	docker build -f Dockerfile.release -t quay.io/dtan4/paus-gitreceive:latest .
 
-.PHONY ci-docker-release docker-build-release
+.PHONY: ci-docker-release docker-build-release
