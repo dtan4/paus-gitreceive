@@ -28,6 +28,7 @@ fi
 
 if [ -n "$PAUS_REPOSITORY_DIR" ]; then
   echo "RepositoryDir=$PAUS_REPOSITORY_DIR" >> /root/paus/config
+  chown -R git:git $PAUS_REPOSITORY_DIR
 fi
 
 exec $@
