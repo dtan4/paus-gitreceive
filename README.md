@@ -1,5 +1,5 @@
 # paus-gitreceive
-
+[![Build Status](https://travis-ci.org/dtan4/paus-gitreceive.svg?branch=master)](https://travis-ci.org/dtan4/paus-gitreceive)
 [![Docker Repository on Quay](https://quay.io/repository/dtan4/paus-gitreceive/status "Docker Repository on Quay")](https://quay.io/repository/dtan4/paus-gitreceive)
 
 Git server of [Paus](https://github.com/dtan4/paus)
