@@ -13,12 +13,6 @@ import (
 	"time"
 )
 
-const (
-	DefaultDockerHost    = "tcp://localhost:2375"
-	DefaultEtcdEndpoint  = "http://localhost:2379"
-	DefaultRepositoryDir = "/repos"
-)
-
 func deploy(application *Application, composeFilePath string) (string, error) {
 	var err error
 
@@ -220,33 +214,15 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
-	baseDomain := os.Getenv("PAUS_BASE_DOMAIN")
+	config, err := LoadConfig()
 
-	if baseDomain == "" {
-		fmt.Fprintln(os.Stderr, "PAUS_BASE_DOMAIN is not set")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	dockerHost := os.Getenv("DOCKER_HOST")
-
-	if dockerHost == "" {
-		dockerHost = DefaultDockerHost
-	}
-
-	etcdEndpoint := os.Getenv("ETCD_ENDPOINT")
-
-	if etcdEndpoint == "" {
-		etcdEndpoint = DefaultEtcdEndpoint
-	}
-
-	repositoryDir := os.Getenv("REPOSITORY_DIR")
-
-	if repositoryDir == "" {
-		repositoryDir = DefaultRepositoryDir
-	}
-
 	application := ApplicationFromArgs(os.Args[1:])
-	repositoryPath, err := unpackReceivedFiles(repositoryDir, application.Username, application.ProjectName, os.Stdin)
+	repositoryPath, err := unpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -272,7 +248,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	etcd, err := NewEtcd(etcdEndpoint)
+	etcd, err := NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -298,7 +274,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainer, err := ContainerFromID(dockerHost, webContainerId)
+	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -310,15 +286,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = registerVulcandInformation(application, baseDomain, webContainer, etcd); err != nil {
+	if err = registerVulcandInformation(application, config.BaseDomain, webContainer, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	urlList := []string{
-		"http://" + application.ProjectName + "." + baseDomain,
-		"http://" + application.Username + "." + baseDomain,
-		"http://" + application.AppName + "." + baseDomain,
+		"http://" + application.ProjectName + "." + config.BaseDomain,
+		"http://" + application.Username + "." + config.BaseDomain,
+		"http://" + application.AppName + "." + config.BaseDomain,
 	}
 
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")

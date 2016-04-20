@@ -1,14 +1,14 @@
-hash: cd105316c837ab220a71bb9274991162f7a8766b7494f2346b7e6f6177a96880
-updated: 2016-04-18T14:52:12.08358811+09:00
+hash: fe3d08ec5c47ee25cc4b31c95e8f3946040c7d2230b5595e2694b310907fe4d8
+updated: 2016-04-20T16:32:21.243475622+09:00
 imports:
 - name: github.com/coreos/etcd
-  version: ea6a747fc1d9bb6a38e84d47020732630755cb8c
+  version: 0c40f4a7e3e00ce19b17742289cedab27247323e
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
 - name: github.com/fsouza/go-dockerclient
-  version: ff3d4ee4753705a048db1855113026395c26a79a
+  version: 7e2450a717e8725de58dc1530218cd64117861b3
   subpackages:
   - external/github.com/docker/docker/opts
   - external/github.com/docker/docker/pkg/archive
@@ -27,6 +27,8 @@ imports:
   - external/github.com/opencontainers/runc/libcontainer/user
   - external/golang.org/x/sys/unix
   - external/golang.org/x/net/context
+- name: github.com/kelseyhightower/envconfig
+  version: cea086319492c3940683ea5e122aa5de70a33923
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
