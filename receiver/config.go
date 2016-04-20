@@ -1,17 +1,18 @@
 package main
 
 import (
-	"io/ioutil"
+	"bufio"
+	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
 const (
-	ConfigPrefix    = "paus"
-	ConfigDirectory = "/root/paus/config"
+	ConfigPrefix   = "paus"
+	ConfigFilePath = "/root/paus/config"
 )
 
 var (
@@ -36,14 +37,32 @@ func fileExists(filePath string) bool {
 	return err == nil
 }
 
-func loadConfigFromFile(filePath string) (string, error) {
-	buf, err := ioutil.ReadFile(filePath)
+func loadConfigFromFile(filePath string) (map[string]string, error) {
+	config := map[string]string{}
+
+	fp, err := os.Open(filePath)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(buf), nil
+	defer fp.Close()
+
+	scanner := bufio.NewScanner(fp)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		keyValue := strings.Split(line, "=")
+
+		if len(keyValue) < 2 {
+			continue
+		}
+
+		key, value := keyValue[0], strings.Join(keyValue[1:], "=")
+		config[key] = value
+	}
+
+	return config, nil
 }
 
 func LoadConfig() (*Config, error) {
@@ -55,20 +74,18 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	if !fileExists(ConfigFilePath) {
+		return &config, nil
+	}
+
+	configFromFile, err := loadConfigFromFile(ConfigFilePath)
+
+	if err != nil {
+		return nil, err
+	}
+
 	for _, configName := range ConfigNames {
-		filePath := filepath.Join(ConfigDirectory, configName)
-
-		if !fileExists(filePath) {
-			continue
-		}
-
-		configValue, err := loadConfigFromFile(filePath)
-
-		if err != nil {
-			return nil, err
-		}
-
-		reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configValue)
+		reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
 	}
 
 	return &config, nil
