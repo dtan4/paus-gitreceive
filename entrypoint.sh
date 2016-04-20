@@ -30,6 +30,4 @@ if [ -n "$PAUS_REPOSITORY_DIR" ]; then
   echo "RepositoryDir=$PAUS_REPOSITORY_DIR" >> /root/paus/config
 fi
 
-cat /root/paus/config
-
 exec $@
