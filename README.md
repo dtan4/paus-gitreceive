@@ -20,4 +20,4 @@ paus-gitreceive does:
 | `PAUS_BASE_DOMAIN`   | Required | Base domain for application URL                |                         | `pausapp.com`           |
 | `PAUS_DOCKER_HOST` |          | Endpoint of Docker daemon                       | `tcp://127.0.0.1:2375` | `tcp://127.0.0.1:2377` (Docker Swarm) |
 | `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
-| `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos/`                   | `/repos`                  |
+| `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos`                   | `/repos`                  |
