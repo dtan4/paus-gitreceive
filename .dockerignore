@@ -4,3 +4,4 @@
 !files/sshd_config
 !files/receiver
 !files/upload-key
+!receiver/bin/receiver-linux_amd64
