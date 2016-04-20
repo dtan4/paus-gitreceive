@@ -2,9 +2,19 @@ package main
 
 import (
 	"io/ioutil"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	PortBindingRegexp = `"?\d+:(\d+)"?`
+)
+
+var (
+	PortBinding = regexp.MustCompile(PortBindingRegexp)
 )
 
 type ComposeFile struct {
@@ -76,6 +86,32 @@ func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string
 	}
 
 	webService["environment"] = newEnvironment
+}
+
+func (c *ComposeFile) RewritePortBindings() {
+	var portString string
+
+	webService := c.service("web")
+	newPorts := []interface{}{}
+
+	for _, port := range webService["ports"].([]interface{}) {
+		switch p := port.(type) {
+		case int:
+			portString = strconv.Itoa(p)
+		case string:
+			portString = p
+		}
+
+		matchResult := PortBinding.FindStringSubmatch(portString)
+
+		if len(matchResult) == 2 {
+			newPorts = append(newPorts, matchResult[1])
+		} else {
+			newPorts = append(newPorts, portString)
+		}
+	}
+
+	webService["ports"] = newPorts
 }
 
 func (c *ComposeFile) SaveAs(filePath string) error {
