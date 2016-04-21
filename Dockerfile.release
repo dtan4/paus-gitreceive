@@ -18,6 +18,9 @@ RUN wget -qO /usr/local/bin/docker-compose https://github.com/docker/compose/rel
 RUN wget -qO /usr/local/bin/gitreceive https://raw.githubusercontent.com/progrium/gitreceive/$GITRECEIVE_COMMIT/gitreceive && \
     chmod +x /usr/local/bin/gitreceive
 
+# Accept all pushed branches
+RUN sed -i -e 's/\[\[ "$refname" == "refs\/heads\/master" \]\] && \\//g' /usr/local/bin/gitreceive
+
 RUN mkdir /var/run/sshd
 RUN mkdir -p /repos && chmod 777 /repos
 
