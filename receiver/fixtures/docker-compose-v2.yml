@@ -2,6 +2,8 @@ version: '2'
 services:
   db:
     image: postgres:9.4
+    ports:
+      - "5432:5432"
   web:
     build: .
     command: bin/rails s -p 8080 -b '0.0.0.0'

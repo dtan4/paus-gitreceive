@@ -105,14 +105,20 @@ func TestRewritePortBindings(t *testing.T) {
 	v1Ports := V1ComposeFile.Yaml["web"].(map[interface{}]interface{})["ports"].([]interface{})
 
 	if len(v1Ports) != 1 || v1Ports[0] != "8080" {
-		t.Fatalf("Failed to rewrite ports. Expect: [8080], actual: %v", v1Ports)
+		t.Fatalf("Failed to rewrite web ports in V1. Expect: [8080], actual: %v", v1Ports)
 	}
 
 	V2ComposeFile.RewritePortBindings()
-	v2Ports := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["ports"].([]interface{})
+	v2WebPorts := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["ports"].([]interface{})
 
-	if len(v2Ports) != 1 || v2Ports[0] != "8080" {
-		t.Fatalf("Failed to rewrite ports. Expect: [8080], actual: %v", v2Ports)
+	if len(v2WebPorts) != 1 || v2WebPorts[0] != "8080" {
+		t.Fatalf("Failed to rewrite web ports in V2. Expect: [8080], actual: %v", v2WebPorts)
+	}
+
+	v2DbPorts := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["db"].(map[interface{}]interface{})["ports"].([]interface{})
+
+	if len(v2DbPorts) != 1 || v2DbPorts[0] != "5432" {
+		t.Fatalf("Failed to rewrite non-web ports in V2. Expect: [5432], actual: %v", v2DbPorts)
 	}
 }
 
