@@ -90,13 +90,13 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 func registerApplicationMetadata(application *Application, etcd *Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
-	if etcd.HasKey(userDirectoryKey) {
+	if !etcd.HasKey(userDirectoryKey) {
 		_ = etcd.Mkdir(userDirectoryKey)
 	}
 
 	appDirectoryKey := userDirectoryKey + "/" + application.AppName
 
-	if etcd.HasKey(appDirectoryKey) {
+	if !etcd.HasKey(appDirectoryKey) {
 		_ = etcd.Mkdir(appDirectoryKey)
 		_ = etcd.Mkdir(appDirectoryKey + "/envs")
 		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
