@@ -67,6 +67,25 @@ func (c *ComposeFile) service(serviceName string) map[interface{}]interface{} {
 	return c.Yaml[serviceName].(map[interface{}]interface{})
 }
 
+func (c *ComposeFile) serviceList() []string {
+	var (
+		services     map[interface{}]interface{}
+		serviceNames []string
+	)
+
+	if c.isVersion2() {
+		services = c.Yaml["services"].(map[interface{}]interface{})
+	} else {
+		services = c.Yaml
+	}
+
+	for name, _ := range services {
+		serviceNames = append(serviceNames, name.(string))
+	}
+
+	return serviceNames
+}
+
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
 	var envString string
 
@@ -91,27 +110,33 @@ func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string
 func (c *ComposeFile) RewritePortBindings() {
 	var portString string
 
-	webService := c.service("web")
-	newPorts := []interface{}{}
+	for _, serviceName := range c.serviceList() {
+		service := c.service(serviceName)
+		newPorts := []interface{}{}
 
-	for _, port := range webService["ports"].([]interface{}) {
-		switch p := port.(type) {
-		case int:
-			portString = strconv.Itoa(p)
-		case string:
-			portString = p
+		if service["ports"] == nil {
+			continue
 		}
 
-		matchResult := PortBinding.FindStringSubmatch(portString)
+		for _, port := range service["ports"].([]interface{}) {
+			switch p := port.(type) {
+			case int:
+				portString = strconv.Itoa(p)
+			case string:
+				portString = p
+			}
 
-		if len(matchResult) == 2 {
-			newPorts = append(newPorts, matchResult[1])
-		} else {
-			newPorts = append(newPorts, portString)
+			matchResult := PortBinding.FindStringSubmatch(portString)
+
+			if len(matchResult) == 2 {
+				newPorts = append(newPorts, matchResult[1])
+			} else {
+				newPorts = append(newPorts, portString)
+			}
 		}
+
+		service["ports"] = newPorts
 	}
-
-	webService["ports"] = newPorts
 }
 
 func (c *ComposeFile) SaveAs(filePath string) error {
