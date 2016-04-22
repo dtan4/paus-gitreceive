@@ -297,6 +297,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
