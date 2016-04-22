@@ -171,6 +171,10 @@ func (c *ComposeFile) InjectBuildArgs(buildArgs map[string]string) {
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
 	var envString string
 
+	if len(environmentVariables) == 0 {
+		return
+	}
+
 	webService := c.service("web")
 	environment := c.environment(webService)
 	environmentMap := c.environmentMap(environment)
