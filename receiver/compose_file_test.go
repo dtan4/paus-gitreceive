@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	V1FilePath, V2FilePath       string
-	V1ComposeFile, V2ComposeFile *ComposeFile
+	V1FilePath, V2FilePath, V2FilePathNoBuild          string
+	V1ComposeFile, V2ComposeFile, V2ComposeFileNoBuild *ComposeFile
 )
 
 func contains(slice []interface{}, item string) bool {
@@ -34,8 +34,64 @@ func setup() {
 
 	V1FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v1.yml")
 	V2FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v2.yml")
+	V2FilePathNoBuild = filepath.Join(workingDir, "fixtures", "docker-compose-v2-nobuild.yml")
 	V1ComposeFile, _ = NewComposeFile(V1FilePath)
 	V2ComposeFile, _ = NewComposeFile(V2FilePath)
+	V2ComposeFileNoBuild, _ = NewComposeFile(V2FilePathNoBuild)
+}
+
+func TestInjectBuildArgs(t *testing.T) {
+	var (
+		buildArgs      map[string]string
+		buildArgString string
+		webBuildArgs   []interface{}
+	)
+
+	setup()
+
+	buildArgs = map[string]string{
+		"FOO": "hoge",
+		"BAR": "fuga",
+		"BAZ": "piyo",
+	}
+
+	// TODO: test for V1
+
+	V2ComposeFile.InjectBuildArgs(buildArgs)
+	webService := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})
+
+	webBuildArgs = webService["build"].(map[interface{}]interface{})["arg"].([]interface{})
+
+	for key, value := range buildArgs {
+		buildArgString = key + "=" + value
+
+		if !contains(webBuildArgs, buildArgString) {
+			t.Fatalf("Compose File V2 does not contain %s", key)
+		}
+	}
+
+	buildArgs = map[string]string{
+		"FOO": "hogefugapiyo",
+	}
+	V2ComposeFile.InjectBuildArgs(buildArgs)
+	webBuildArgs = V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"].(map[interface{}]interface{})["arg"].([]interface{})
+
+	oldBuildArgtring := "FOO=hoge"
+	newBuildArgString := "FOO=hogefugapiyo"
+
+	if contains(webBuildArgs, oldBuildArgtring) {
+		t.Fatalf("Failed to update existing key FOO. %s still exists.", oldBuildArgtring)
+	}
+
+	if !contains(webBuildArgs, newBuildArgString) {
+		t.Fatalf("Failed to update existing key FOO. %s does not exist.", newBuildArgString)
+	}
+
+	V2ComposeFileNoBuild.InjectBuildArgs(buildArgs)
+
+	if V2ComposeFileNoBuild.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"] != nil {
+		t.Fatalf("Build section was created in Compose file without build section. Actual: %v", V2ComposeFile.Yaml)
+	}
 }
 
 func TestInjectEnvironmentVariables(t *testing.T) {

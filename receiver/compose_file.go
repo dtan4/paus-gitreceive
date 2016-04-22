@@ -39,6 +39,28 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 	return &ComposeFile{composeFilePath, m}, nil
 }
 
+func (c *ComposeFile) buildArgs(service map[interface{}]interface{}) []interface{} {
+	b := service["build"].(map[interface{}]interface{})["arg"]
+
+	if b == nil {
+		return []interface{}{}
+	}
+
+	return b.([]interface{})
+}
+
+func (c *ComposeFile) buildArgsMap(buildArgs []interface{}) map[string]string {
+	result := map[string]string{}
+
+	for _, buildArgString := range buildArgs {
+		splited := strings.Split(buildArgString.(string), "=")
+		key, value := splited[0], strings.Join(splited[1:], "=")
+		result[key] = value
+	}
+
+	return result
+}
+
 func (c *ComposeFile) environment(service map[interface{}]interface{}) []interface{} {
 	return service["environment"].([]interface{})
 }
@@ -84,6 +106,60 @@ func (c *ComposeFile) serviceList() []string {
 	}
 
 	return serviceNames
+}
+
+func (c *ComposeFile) transformBuildToMap(service map[interface{}]interface{}) {
+	build := service["build"]
+
+	switch b := build.(type) {
+	case map[interface{}]interface{}:
+		// build:
+		//   context: .
+		//   arg:
+		//     - FOO=bar
+
+		return
+
+	case string:
+		// build: .
+
+		newBuild := map[interface{}]interface{}{
+			"context": b,
+		}
+		service["build"] = newBuild
+	}
+}
+
+func (c *ComposeFile) InjectBuildArgs(buildArgs map[string]string) {
+	var buildArgString string
+
+	if !c.isVersion2() || len(buildArgs) == 0 {
+		return
+	}
+
+	webService := c.service("web")
+
+	if webService["build"] == nil {
+		return
+	}
+
+	c.transformBuildToMap(webService)
+
+	b := c.buildArgs(webService)
+	buildArgsMap := c.buildArgsMap(b)
+
+	for key, value := range buildArgs {
+		buildArgsMap[key] = value
+	}
+
+	newBuildArgs := []interface{}{}
+
+	for key, value := range buildArgsMap {
+		buildArgString = key + "=" + value
+		newBuildArgs = append(newBuildArgs, buildArgString)
+	}
+
+	webService["build"].(map[interface{}]interface{})["arg"] = newBuildArgs
 }
 
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
