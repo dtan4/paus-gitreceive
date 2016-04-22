@@ -40,7 +40,7 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 }
 
 func (c *ComposeFile) buildArgs(service map[interface{}]interface{}) []interface{} {
-	b := service["build"].(map[interface{}]interface{})["arg"]
+	b := service["build"].(map[interface{}]interface{})["args"]
 
 	if b == nil {
 		return []interface{}{}
@@ -165,7 +165,7 @@ func (c *ComposeFile) InjectBuildArgs(buildArgs map[string]string) {
 		newBuildArgs = append(newBuildArgs, buildArgString)
 	}
 
-	webService["build"].(map[interface{}]interface{})["arg"] = newBuildArgs
+	webService["build"].(map[interface{}]interface{})["args"] = newBuildArgs
 }
 
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {

@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	V1FilePath, V2FilePath, V2FilePathNoBuildEnv          string
-	V1ComposeFile, V2ComposeFile, V2ComposeFileNoBuildEnv *ComposeFile
+	V1FilePath, V2FilePath, V2FilePathBuildArg, V2FilePathNoBuildEnv             string
+	V1ComposeFile, V2ComposeFile, V2ComposeFileBuildArg, V2ComposeFileNoBuildEnv *ComposeFile
 )
 
 func contains(slice []interface{}, item string) bool {
@@ -34,9 +34,11 @@ func setup() {
 
 	V1FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v1.yml")
 	V2FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v2.yml")
+	V2FilePathBuildArg = filepath.Join(workingDir, "fixtures", "docker-compose-v2-buildarg.yml")
 	V2FilePathNoBuildEnv = filepath.Join(workingDir, "fixtures", "docker-compose-v2-nobuildenv.yml")
 	V1ComposeFile, _ = NewComposeFile(V1FilePath)
 	V2ComposeFile, _ = NewComposeFile(V2FilePath)
+	V2ComposeFileBuildArg, _ = NewComposeFile(V2FilePathBuildArg)
 	V2ComposeFileNoBuildEnv, _ = NewComposeFile(V2FilePathNoBuildEnv)
 }
 
@@ -60,7 +62,7 @@ func TestInjectBuildArgs(t *testing.T) {
 	V2ComposeFile.InjectBuildArgs(buildArgs)
 	webService := V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})
 
-	webBuildArgs = webService["build"].(map[interface{}]interface{})["arg"].([]interface{})
+	webBuildArgs = webService["build"].(map[interface{}]interface{})["args"].([]interface{})
 
 	for key, value := range buildArgs {
 		buildArgString = key + "=" + value
@@ -73,8 +75,8 @@ func TestInjectBuildArgs(t *testing.T) {
 	buildArgs = map[string]string{
 		"FOO": "hogefugapiyo",
 	}
-	V2ComposeFile.InjectBuildArgs(buildArgs)
-	webBuildArgs = V2ComposeFile.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"].(map[interface{}]interface{})["arg"].([]interface{})
+	V2ComposeFileBuildArg.InjectBuildArgs(buildArgs)
+	webBuildArgs = V2ComposeFileBuildArg.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"].(map[interface{}]interface{})["args"].([]interface{})
 
 	oldBuildArgtring := "FOO=hoge"
 	newBuildArgString := "FOO=hogefugapiyo"
