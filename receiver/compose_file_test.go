@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	V1FilePath, V2FilePath, V2FilePathNoBuild          string
-	V1ComposeFile, V2ComposeFile, V2ComposeFileNoBuild *ComposeFile
+	V1FilePath, V2FilePath, V2FilePathNoBuildEnv          string
+	V1ComposeFile, V2ComposeFile, V2ComposeFileNoBuildEnv *ComposeFile
 )
 
 func contains(slice []interface{}, item string) bool {
@@ -34,10 +34,10 @@ func setup() {
 
 	V1FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v1.yml")
 	V2FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v2.yml")
-	V2FilePathNoBuild = filepath.Join(workingDir, "fixtures", "docker-compose-v2-nobuild.yml")
+	V2FilePathNoBuildEnv = filepath.Join(workingDir, "fixtures", "docker-compose-v2-nobuildenv.yml")
 	V1ComposeFile, _ = NewComposeFile(V1FilePath)
 	V2ComposeFile, _ = NewComposeFile(V2FilePath)
-	V2ComposeFileNoBuild, _ = NewComposeFile(V2FilePathNoBuild)
+	V2ComposeFileNoBuildEnv, _ = NewComposeFile(V2FilePathNoBuildEnv)
 }
 
 func TestInjectBuildArgs(t *testing.T) {
@@ -87,10 +87,10 @@ func TestInjectBuildArgs(t *testing.T) {
 		t.Fatalf("Failed to update existing key FOO. %s does not exist.", newBuildArgString)
 	}
 
-	V2ComposeFileNoBuild.InjectBuildArgs(buildArgs)
+	V2ComposeFileNoBuildEnv.InjectBuildArgs(buildArgs)
 
-	if V2ComposeFileNoBuild.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"] != nil {
-		t.Fatalf("Build section was created in Compose file without build section. Actual: %v", V2ComposeFile.Yaml)
+	if V2ComposeFileNoBuildEnv.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["build"] != nil {
+		t.Fatalf("Build section was created in Compose file without build section. Actual: %v", V2ComposeFileNoBuildEnv.Yaml)
 	}
 }
 
@@ -151,6 +151,12 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 
 	if !contains(webEnvironment, newEnvString) {
 		t.Fatalf("Failed to update existing key FOO. %s does not exist.", newEnvString)
+	}
+
+	V2ComposeFileNoBuildEnv.InjectEnvironmentVariables(environmentVariables)
+
+	if V2ComposeFileNoBuildEnv.Yaml["services"].(map[interface{}]interface{})["web"].(map[interface{}]interface{})["environment"] == nil {
+		t.Fatalf("Build section was not created in Compose file without build section. Actual: %v", V2ComposeFileNoBuildEnv.Yaml)
 	}
 }
 

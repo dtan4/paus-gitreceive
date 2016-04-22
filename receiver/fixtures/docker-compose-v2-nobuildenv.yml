@@ -7,10 +7,6 @@ services:
   web:
     image: ruby:2.3.0
     command: bin/rails s -p 8080 -b '0.0.0.0'
-    environment:
-      - DATABASE_HOST=db
-      - DATABASE_PORT=5432
-      - DATABASE_USER=postgres
     ports:
       - "80:8080"
     links:

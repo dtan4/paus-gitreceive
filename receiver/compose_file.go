@@ -62,7 +62,13 @@ func (c *ComposeFile) buildArgsMap(buildArgs []interface{}) map[string]string {
 }
 
 func (c *ComposeFile) environment(service map[interface{}]interface{}) []interface{} {
-	return service["environment"].([]interface{})
+	e := service["environment"]
+
+	if e == nil {
+		return []interface{}{}
+	}
+
+	return e.([]interface{})
 }
 
 func (c *ComposeFile) environmentMap(environment []interface{}) map[string]string {
@@ -164,6 +170,10 @@ func (c *ComposeFile) InjectBuildArgs(buildArgs map[string]string) {
 
 func (c *ComposeFile) InjectEnvironmentVariables(environmentVariables map[string]string) {
 	var envString string
+
+	if len(environmentVariables) == 0 {
+		return
+	}
 
 	webService := c.service("web")
 	environment := c.environment(webService)
