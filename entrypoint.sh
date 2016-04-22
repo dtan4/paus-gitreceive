@@ -31,4 +31,13 @@ if [ -n "$PAUS_REPOSITORY_DIR" ]; then
   chown -R git:git $PAUS_REPOSITORY_DIR
 fi
 
+if [ -n "$PAUS_DOCKER_CONFIG_BASE64" ]; then
+  if [ ! -d /home/git/.docker ]; then
+    mkdir /home/git/.docker
+  fi
+
+  echo $PAUS_DOCKRE_CONFIG_BASE64 | base64 -d > /home/git/.docker/config.json
+  chown -R git /home/git/.docker
+fi
+
 exec $@
