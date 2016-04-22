@@ -36,7 +36,7 @@ if [ -n "$PAUS_DOCKER_CONFIG_BASE64" ]; then
     mkdir /home/git/.docker
   fi
 
-  echo $PAUS_DOCKRE_CONFIG_BASE64 | base64 -d > /home/git/.docker/config.json
+  echo $PAUS_DOCKER_CONFIG_BASE64 | base64 -d > /home/git/.docker/config.json
   chown -R git /home/git/.docker
 fi
 
