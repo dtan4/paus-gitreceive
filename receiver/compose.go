@@ -30,7 +30,9 @@ func runCommand(command *exec.Cmd) error {
 		fmt.Println(scanner.Text())
 	}
 
-	command.Wait()
+	if err = command.Wait(); err != nil {
+		return err
+	}
 
 	return nil
 }
