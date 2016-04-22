@@ -45,6 +45,48 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	return webContainerId, nil
 }
 
+func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
+	userDirectoryKey := "/paus/users/" + application.Username
+
+	if !etcd.HasKey(userDirectoryKey) {
+		return nil
+	}
+
+	appDirectoryKey := userDirectoryKey + "/" + application.AppName
+
+	if !etcd.HasKey(appDirectoryKey) {
+		return nil
+	}
+
+	buildArgsKey := appDirectoryKey + "/build-args/"
+
+	if !etcd.HasKey(buildArgsKey) {
+		return nil
+	}
+
+	buildArgKeys, err := etcd.List(buildArgsKey, false)
+
+	if err != nil {
+		return err
+	}
+
+	buildArgs := map[string]string{}
+
+	for _, key := range buildArgKeys {
+		value, err := etcd.Get(key)
+
+		if err != nil {
+			return err
+		}
+
+		buildArgs[strings.Replace(key, buildArgsKey, "", 1)] = value
+	}
+
+	composeFile.InjectBuildArgs(buildArgs)
+
+	return nil
+}
+
 func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
