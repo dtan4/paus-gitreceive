@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,6 +17,14 @@ type Compose struct {
 	projectName     string
 }
 
+func printLine(r io.Reader) {
+	sc := bufio.NewScanner(r)
+
+	for sc.Scan() {
+		fmt.Println(sc.Text())
+	}
+}
+
 func runCommand(command *exec.Cmd) error {
 	stdout, err := command.StdoutPipe()
 
@@ -23,12 +32,16 @@ func runCommand(command *exec.Cmd) error {
 		return err
 	}
 
-	command.Start()
-	scanner := bufio.NewScanner(stdout)
+	stderr, err := command.StderrPipe()
 
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+	if err != nil {
+		return err
 	}
+
+	command.Start()
+
+	go printLine(stdout)
+	go printLine(stderr)
 
 	if err = command.Wait(); err != nil {
 		return err
