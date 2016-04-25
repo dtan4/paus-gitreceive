@@ -59,7 +59,7 @@ func NewCompose(dockerHost, composeFilePath, projectName string) *Compose {
 }
 
 func (c *Compose) Build() error {
-	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "build")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "--x-networking", "--x-network-driver", "overlay", "build")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
@@ -70,7 +70,7 @@ func (c *Compose) Build() error {
 }
 
 func (c *Compose) GetContainerId(service string) (string, error) {
-	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "ps", "-q", service)
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "--x-networking", "--x-network-driver", "overlay", "ps", "-q", service)
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 	out, err := cmd.Output()
 
@@ -82,7 +82,7 @@ func (c *Compose) GetContainerId(service string) (string, error) {
 }
 
 func (c *Compose) Pull() error {
-	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "pull")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "--x-networking", "--x-network-driver", "overlay", "pull")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
@@ -93,7 +93,7 @@ func (c *Compose) Pull() error {
 }
 
 func (c *Compose) Up() error {
-	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "up", "-d")
+	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "--x-networking", "--x-network-driver", "overlay", "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := runCommand(cmd); err != nil {
