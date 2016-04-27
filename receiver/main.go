@@ -52,7 +52,7 @@ func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *E
 		return nil
 	}
 
-	appDirectoryKey := userDirectoryKey + "/" + application.AppName
+	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
 		return nil
@@ -94,7 +94,7 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 		return nil
 	}
 
-	appDirectoryKey := userDirectoryKey + "/" + application.AppName
+	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
 		return nil
@@ -136,7 +136,7 @@ func registerApplicationMetadata(application *Application, etcd *Etcd) error {
 		_ = etcd.Mkdir(userDirectoryKey)
 	}
 
-	appDirectoryKey := userDirectoryKey + "/" + application.AppName
+	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
 		_ = etcd.Mkdir(appDirectoryKey)
