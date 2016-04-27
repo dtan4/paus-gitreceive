@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+func appDirExists(application *Application, etcd *Etcd) bool {
+	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
+}
+
 func deploy(dockerHost string, application *Application, composeFilePath string) (string, error) {
 	var err error
 
@@ -263,7 +267,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	etcd, err := NewEtcd(config.EtcdEndpoint)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	application := ApplicationFromArgs(os.Args[1:])
+
+	if !appDirExists(application, etcd) {
+		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
+		os.Exit(1)
+	}
+
 	repositoryPath, err := unpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
@@ -284,13 +301,6 @@ func main() {
 
 	fmt.Println("=====> docker-compose.yml was found")
 	composeFile, err := NewComposeFile(composeFilePath)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	etcd, err := NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
