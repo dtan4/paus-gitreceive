@@ -7,12 +7,6 @@ set -e
 #   https://github.com/progrium/gitreceive/wiki/TipsAndTricks#handling-submodules
 #
 
-if [ -d .git ]; then
-  rm -fr .git
-fi
-
-git init .
-
 git config -f .gitmodules --get-regexp '^submodule\..*\.path$' |
   while read path_key path
   do
