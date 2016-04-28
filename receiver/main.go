@@ -49,6 +49,10 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	return webContainerId, nil
 }
 
+func getSubmodules() error {
+	return nil
+}
+
 func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
@@ -290,6 +294,18 @@ func main() {
 
 	if err = os.Chdir(repositoryPath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+	}
+
+	fmt.Println("=====> Getting submodules...")
+
+	if err = os.RemoveAll(filepath.Join(repositoryPath, ".git")); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err = getSubmodules(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")

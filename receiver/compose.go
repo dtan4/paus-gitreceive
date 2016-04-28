@@ -3,9 +3,6 @@ package main
 // TODO: Use github.com/docker/libcompose
 
 import (
-	"bufio"
-	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,39 +12,6 @@ type Compose struct {
 	dockerHost      string
 	composeFilePath string
 	projectName     string
-}
-
-func printLine(r io.Reader) {
-	sc := bufio.NewScanner(r)
-
-	for sc.Scan() {
-		fmt.Println(sc.Text())
-	}
-}
-
-func runCommand(command *exec.Cmd) error {
-	stdout, err := command.StdoutPipe()
-
-	if err != nil {
-		return err
-	}
-
-	stderr, err := command.StderrPipe()
-
-	if err != nil {
-		return err
-	}
-
-	command.Start()
-
-	go printLine(stdout)
-	go printLine(stderr)
-
-	if err = command.Wait(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName string) *Compose {
@@ -62,7 +26,7 @@ func (c *Compose) Build() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "build")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := runCommand(cmd); err != nil {
+	if err := RunCommand(cmd); err != nil {
 		return err
 	}
 
@@ -85,7 +49,7 @@ func (c *Compose) Pull() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "pull")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := runCommand(cmd); err != nil {
+	if err := RunCommand(cmd); err != nil {
 		return err
 	}
 
@@ -96,7 +60,7 @@ func (c *Compose) Up() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := runCommand(cmd); err != nil {
+	if err := RunCommand(cmd); err != nil {
 		return err
 	}
 
