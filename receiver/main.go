@@ -63,15 +63,7 @@ func getSubmodules(repositoryPath string) error {
 		}
 	}
 
-	cmd := exec.Command("git", "init")
-	cmd.Env = append(os.Environ(), "GIT_DIR="+dir)
-
-	if err = RunCommand(cmd); err != nil {
-		return errors.Wrap(err, "Failed to initialize git repo.")
-	}
-
-	cmd = exec.Command("/usr/local/bin/get-submodules")
-	cmd.Env = append(os.Environ(), "GIT_DIR="+dir)
+	cmd := exec.Command("/usr/local/bin/get-submodules")
 
 	if err = RunCommand(cmd); err != nil {
 		return errors.Wrap(err, "Failed to get submodules.")
