@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func appDirExists(application *Application, etcd *Etcd) bool {
@@ -298,7 +300,7 @@ func main() {
 	cmd := exec.Command("/usr/local/bin/get-submodules")
 
 	if err = RunCommand(cmd); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
