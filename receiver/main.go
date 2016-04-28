@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -47,10 +48,6 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	}
 
 	return webContainerId, nil
-}
-
-func getSubmodules() error {
-	return nil
 }
 
 func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
@@ -298,12 +295,9 @@ func main() {
 
 	fmt.Println("=====> Getting submodules...")
 
-	if err = os.RemoveAll(filepath.Join(repositoryPath, ".git")); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	cmd := exec.Command("/usr/local/bin/get-submodules")
 
-	if err = getSubmodules(); err != nil {
+	if err = RunCommand(cmd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

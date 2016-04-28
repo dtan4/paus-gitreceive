@@ -1,6 +1,7 @@
 *
 !Dockerfile
 !entrypoint.sh
+!files/get-submodules
 !files/sshd_config
 !files/receiver
 !files/upload-key
