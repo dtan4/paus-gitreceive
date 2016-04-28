@@ -30,6 +30,7 @@ RUN gitreceive init
 RUN echo "git:passwd" | chpasswd
 COPY receiver/bin/receiver-linux_amd64 /home/git/receiver
 
+COPY files/get-submodules /usr/local/bin/
 COPY files/upload-key /usr/local/bin/
 
 COPY entrypoint.sh /

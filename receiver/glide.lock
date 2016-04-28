@@ -1,5 +1,5 @@
-hash: fe3d08ec5c47ee25cc4b31c95e8f3946040c7d2230b5595e2694b310907fe4d8
-updated: 2016-04-20T16:32:21.243475622+09:00
+hash: 8440e5ed473e5f45f6be802ddc6367a90e492d463656fe316870da34dd441fa3
+updated: 2016-04-28T11:42:55.569979438+09:00
 imports:
 - name: github.com/coreos/etcd
   version: 0c40f4a7e3e00ce19b17742289cedab27247323e
@@ -29,6 +29,8 @@ imports:
   - external/golang.org/x/net/context
 - name: github.com/kelseyhightower/envconfig
   version: cea086319492c3940683ea5e122aa5de70a33923
+- name: github.com/pkg/errors
+  version: cd6e0b425dfeaa184e93ed993aaee9dea03dc14d
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:

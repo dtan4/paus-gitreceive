@@ -7,10 +7,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func appDirExists(application *Application, etcd *Etcd) bool {
@@ -47,6 +50,26 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	}
 
 	return webContainerId, nil
+}
+
+func getSubmodules(repositoryPath string) error {
+	dir := filepath.Join(repositoryPath, ".git")
+
+	stat, err := os.Stat(dir)
+
+	if err == nil && stat.IsDir() {
+		if e := os.RemoveAll(dir); e != nil {
+			return errors.Wrap(e, fmt.Sprintf("Failed to remove %s.", dir))
+		}
+	}
+
+	cmd := exec.Command("/usr/local/bin/get-submodules")
+
+	if err = RunCommand(cmd); err != nil {
+		return errors.Wrap(err, "Failed to get submodules.")
+	}
+
+	return nil
 }
 
 func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
@@ -290,6 +313,13 @@ func main() {
 
 	if err = os.Chdir(repositoryPath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+	}
+
+	fmt.Println("=====> Getting submodules ...")
+
+	if err = getSubmodules(repositoryPath); err != nil {
+		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to get submodules. path: %s", repositoryPath)))
+		os.Exit(1)
 	}
 
 	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
