@@ -28,25 +28,25 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	fmt.Println("=====> Building ...")
 
 	if err = compose.Build(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to build application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	fmt.Println("=====> Pulling ...")
 
 	if err = compose.Pull(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to pull application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	fmt.Println("=====> Deploying ...")
 
 	if err = compose.Up(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	webContainerId, err := compose.GetContainerId("web")
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	return webContainerId, nil

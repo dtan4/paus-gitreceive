@@ -3,9 +3,12 @@ package main
 // TODO: Use github.com/docker/libcompose
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Compose struct {
@@ -27,7 +30,7 @@ func (c *Compose) Build() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := RunCommand(cmd); err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to build Docker Compose project. projectName: %s", c.projectName))
 	}
 
 	return nil
@@ -39,7 +42,7 @@ func (c *Compose) GetContainerId(service string) (string, error) {
 	out, err := cmd.Output()
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to get container ID. projectName: %s, service: %s", c.projectName, service))
 	}
 
 	return strings.Replace(string(out), "\n", "", -1), nil
@@ -50,7 +53,7 @@ func (c *Compose) Pull() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := RunCommand(cmd); err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to pull images in Docker Compose project. projectName: %s", c.projectName))
 	}
 
 	return nil
@@ -61,7 +64,7 @@ func (c *Compose) Up() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := RunCommand(cmd); err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to start Docker Compose project. projectName: %s", c.projectName))
 	}
 
 	return nil
