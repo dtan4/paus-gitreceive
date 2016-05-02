@@ -383,10 +383,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	uriScheme, err := etcd.Get("/paus/uri-scheme")
+
+	if err != nil {
+		errors.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	urlList := []string{
-		"http://" + application.ProjectName + "." + config.BaseDomain,
-		"http://" + application.Username + "." + config.BaseDomain,
-		"http://" + application.AppName + "." + config.BaseDomain,
+		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain,
+		uriScheme + "://" + application.Username + "." + config.BaseDomain,
+		uriScheme + "://" + application.AppName + "." + config.BaseDomain,
 	}
 
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
