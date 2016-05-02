@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/fsouza/go-dockerclient"
+	"github.com/pkg/errors"
 )
 
 type Container struct {
@@ -28,7 +31,7 @@ func ContainerFromID(dockerHost, containerId string) (*Container, error) {
 	containerInfo, err := client.InspectContainer(containerId)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to get container info. containerID %s", containerId))
 	}
 
 	exposedPort := firstExposedPort(containerInfo.NetworkSettings.Ports)

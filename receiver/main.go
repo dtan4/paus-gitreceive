@@ -28,25 +28,25 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 	fmt.Println("=====> Building ...")
 
 	if err = compose.Build(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to build application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	fmt.Println("=====> Pulling ...")
 
 	if err = compose.Pull(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to pull application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	fmt.Println("=====> Deploying ...")
 
 	if err = compose.Up(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	webContainerId, err := compose.GetContainerId("web")
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
 	return webContainerId, nil
@@ -94,7 +94,7 @@ func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *E
 	buildArgKeys, err := etcd.List(buildArgsKey, false)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to get build arg keys.")
 	}
 
 	buildArgs := map[string]string{}
@@ -103,7 +103,7 @@ func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *E
 		value, err := etcd.Get(key)
 
 		if err != nil {
-			return err
+			return errors.Wrap(err, fmt.Sprintf("Failed to get build arg value. key: %s", key))
 		}
 
 		buildArgs[strings.Replace(key, buildArgsKey, "", 1)] = value
@@ -136,7 +136,7 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 	envKeys, err := etcd.List(envDirectoryKey, false)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to get environment variable keys.")
 	}
 
 	environmentVariables := map[string]string{}
@@ -145,7 +145,7 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 		value, err := etcd.Get(key)
 
 		if err != nil {
-			return err
+			return errors.Wrap(err, fmt.Sprintf("Failed to get environment variable value. key: %s", key))
 		}
 
 		environmentVariables[strings.Replace(key, envDirectoryKey, "", 1)] = value
@@ -172,7 +172,7 @@ func registerApplicationMetadata(application *Application, etcd *Etcd) error {
 	}
 
 	if err := etcd.Set(appDirectoryKey+"/revisions/"+application.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set revisdion.")
 	}
 
 	return nil
@@ -183,7 +183,7 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 
 	// {"Type": "http"}
 	if err := etcd.Set(vulcandDirectoryKeyBase+"/backends/"+application.ProjectName+"/backend", "{\"Type\": \"http\"}"); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set vulcand backend.")
 	}
 
 	// {"URL": "http://$web_container_host_ip:$web_container_port"}
@@ -191,7 +191,7 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 		vulcandDirectoryKeyBase+"/backends/"+application.ProjectName+"/servers/"+webContainer.ContainerId,
 		"{\"URL\": \"http://"+webContainer.HostIP()+":"+webContainer.HostPort()+"\"}",
 	); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set vulcand backend server.")
 	}
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$PROJECT_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
@@ -199,7 +199,7 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 		vulcandDirectoryKeyBase+"/frontends/"+application.ProjectName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set vulcand frontend with project name.")
 	}
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$USER_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
@@ -207,7 +207,7 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 		vulcandDirectoryKeyBase+"/frontends/"+application.Username+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set vulcand frontend with username.")
 	}
 
 	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$APP_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
@@ -215,7 +215,7 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 		vulcandDirectoryKeyBase+"/frontends/"+application.AppName+"/frontend",
 		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
 	); err != nil {
-		return err
+		return errors.Wrap(err, "Failed to set vulcand frontend with appName.")
 	}
 
 	return nil
@@ -225,13 +225,15 @@ func removeUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to open %s.", repositoryPath))
 	}
 
 	for _, file := range files {
 		if filepath.Join(repositoryPath, file.Name()) != newComposeFilePath {
-			if err = os.RemoveAll(filepath.Join(repositoryPath, file.Name())); err != nil {
-				return err
+			path := filepath.Join(repositoryPath, file.Name())
+
+			if err = os.RemoveAll(path); err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Failed to remove files in %s.", path))
 			}
 		}
 	}
@@ -243,7 +245,7 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
 
 	if err := os.MkdirAll(repositoryPath, 0777); err != nil {
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s.", repositoryPath))
 	}
 
 	reader := tar.NewReader(stdin)
@@ -256,7 +258,7 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 		}
 
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Failed to iterate tarball.")
 		}
 
 		buffer := new(bytes.Buffer)
@@ -265,16 +267,18 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if _, err = os.Stat(outPath); err != nil {
-				os.MkdirAll(outPath, 0755)
+				if err = os.MkdirAll(outPath, 0755); err != nil {
+					return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s from tarball.", outPath))
+				}
 			}
 
 		case tar.TypeReg, tar.TypeRegA:
 			if _, err = io.Copy(buffer, reader); err != nil {
-				return "", err
+				return "", errors.Wrap(err, fmt.Sprintf("Failed to copy file contents in %s from tarball.", outPath))
 			}
 
 			if err = ioutil.WriteFile(outPath, buffer.Bytes(), os.FileMode(header.Mode)); err != nil {
-				return "", err
+				return "", errors.Wrap(err, fmt.Sprintf("Failed to create file %s from tarball.", outPath))
 			}
 		}
 	}
@@ -286,14 +290,14 @@ func main() {
 	config, err := LoadConfig()
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	etcd, err := NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -307,12 +311,13 @@ func main() {
 	repositoryPath, err := unpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if err = os.Chdir(repositoryPath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to chdir to %s.", repositoryPath)))
+		os.Exit(1)
 	}
 
 	fmt.Println("=====> Getting submodules ...")
@@ -333,17 +338,17 @@ func main() {
 	composeFile, err := NewComposeFile(composeFilePath)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -351,14 +356,14 @@ func main() {
 	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
 	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	webContainerId, err := deploy(config.DockerHost, application, newComposeFilePath)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -367,19 +372,19 @@ func main() {
 	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> Registering metadata ...")
 
 	if err = registerApplicationMetadata(application, etcd); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if err = registerVulcandInformation(application, config.BaseDomain, webContainer, etcd); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -403,7 +408,7 @@ func main() {
 	}
 
 	if err = removeUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 }

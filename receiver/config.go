@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -36,7 +38,7 @@ func loadConfigFromFile(filePath string) (map[string]string, error) {
 	fp, err := os.Open(filePath)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to open %s.", filePath))
 	}
 
 	defer fp.Close()
@@ -64,7 +66,7 @@ func LoadConfig() (*Config, error) {
 	err := envconfig.Process(ConfigPrefix, &config)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to load config from envs.")
 	}
 
 	if _, err := os.Stat(ConfigFilePath); err != nil {
@@ -74,7 +76,7 @@ func LoadConfig() (*Config, error) {
 	configFromFile, err := loadConfigFromFile(ConfigFilePath)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to load config from file. path: %s", ConfigFilePath))
 	}
 
 	for _, configName := range ConfigNames {

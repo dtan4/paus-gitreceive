@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -26,14 +28,14 @@ func NewComposeFile(composeFilePath string) (*ComposeFile, error) {
 	buf, err := ioutil.ReadFile(composeFilePath)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to read compose file. path: %s", composeFilePath))
 	}
 
 	m := make(map[interface{}]interface{})
 	err = yaml.Unmarshal(buf, &m)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to parse YAML file. path: %s", composeFilePath))
 	}
 
 	return &ComposeFile{composeFilePath, m}, nil
@@ -229,11 +231,11 @@ func (c *ComposeFile) SaveAs(filePath string) error {
 	data, err := yaml.Marshal(c.Yaml)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to generate YAML file.")
 	}
 
 	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to save as YAML file. path: %s", filePath))
 	}
 
 	return nil
