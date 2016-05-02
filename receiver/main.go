@@ -337,7 +337,7 @@ func main() {
 	composeFile, err := NewComposeFile(composeFilePath)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -355,7 +355,7 @@ func main() {
 	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
 	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
