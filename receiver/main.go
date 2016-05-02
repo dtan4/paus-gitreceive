@@ -371,7 +371,7 @@ func main() {
 	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
