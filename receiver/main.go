@@ -316,7 +316,8 @@ func main() {
 	}
 
 	if err = os.Chdir(repositoryPath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to chdir to %s.", repositoryPath)))
+		os.Exit(1)
 	}
 
 	fmt.Println("=====> Getting submodules ...")
@@ -362,7 +363,7 @@ func main() {
 	webContainerId, err := deploy(config.DockerHost, application, newComposeFilePath)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -400,7 +401,7 @@ func main() {
 	}
 
 	if err = removeUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 }
