@@ -194,26 +194,26 @@ func registerVulcandInformation(application *Application, baseDomain string, web
 		return errors.Wrap(err, "Failed to set vulcand backend server.")
 	}
 
-	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$PROJECT_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$PROJECT_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)", \"Settings\": {\"TrustForwardHeader\": true}}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+application.ProjectName+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.ProjectName+"."+baseDomain+"`) && PathRegexp(`/`)\", \"Settings\": {\"TrustForwardHeader\": true}}",
 	); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand frontend with project name.")
 	}
 
-	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$USER_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$USER_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)", \"Settings\": {\"TrustForwardHeader\": true}}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+application.Username+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.Username+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.Username+"."+baseDomain+"`) && PathRegexp(`/`)\", \"Settings\": {\"TrustForwardHeader\": true}}",
 	); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand frontend with username.")
 	}
 
-	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$APP_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)"}
+	// {"Type": "http", "BackendId": "$PROJECT_NAME", "Route": "Host(`$APP_NAME.$BASE_DOMAIN`) && PathRegexp(`/`)", \"Settings\": {\"TrustForwardHeader\": true}}
 	if err := etcd.Set(
 		vulcandDirectoryKeyBase+"/frontends/"+application.AppName+"/frontend",
-		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\"}",
+		"{\"Type\": \"http\", \"BackendId\": \""+application.ProjectName+"\", \"Route\": \"Host(`"+application.AppName+"."+baseDomain+"`) && PathRegexp(`/`)\", \"Settings\": {\"TrustForwardHeader\": true}}",
 	); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand frontend with appName.")
 	}
