@@ -13,7 +13,7 @@ func printLine(r io.Reader) {
 	sc := bufio.NewScanner(r)
 
 	for sc.Scan() {
-		fmt.Println(sc.Text())
+		fmt.Println("       " + sc.Text())
 	}
 }
 
