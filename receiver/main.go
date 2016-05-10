@@ -396,9 +396,9 @@ func main() {
 	}
 
 	urlList := []string{
-		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain,
-		uriScheme + "://" + application.Username + "." + config.BaseDomain,
-		uriScheme + "://" + application.AppName + "." + config.BaseDomain,
+		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain, // http://dtan4-docker-service-rails-a7f955b4.pausapp.com
+		uriScheme + "://" + application.Username + "." + config.BaseDomain,    // http://dtan4.pausapp.com
+		uriScheme + "://" + application.AppName + "." + config.BaseDomain,     // http://docker-service-rails.pausapp.com
 	}
 
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
