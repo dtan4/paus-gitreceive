@@ -373,8 +373,8 @@ func main() {
 	}
 
 	urlList := []string{
-		fmt.Sprintf("%s://%s.%s", uriScheme, application.ProjectName, config.BaseDomain),                      // http://dtan4-docker-service-rails-a7f955b4.pausapp.com
-		fmt.Sprintf("%s://%s-%s.%s", uriScheme, application.Username, application.AppName, config.BaseDomain), // http://dtan4-docker-service-rails.pausapp.com
+		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain,
+		uriScheme + "://" + application.Username + "." + application.AppName + "." + config.BaseDomain,
 	}
 
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
