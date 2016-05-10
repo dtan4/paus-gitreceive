@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -80,6 +81,8 @@ func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain s
 		return errors.Wrap(err, "Failed to generate vulcand frontend JSON.")
 	}
 
+	// json.Marshal generates HTML-escaped JSON string
+	b = bytes.Replace(b, []byte("\\u0026"), []byte("&"), -1)
 	json := string(b)
 
 	if err := v.etcd.Set(key, json); err != nil {
