@@ -1,14 +1,16 @@
+BINARY := receiver
+BINARY_DIR := bin
+
 default: build
 
 build: clean
-	go build -o bin/receiver
+	go build -o $(BINARY_DIR)/$(BINARY)
 
 build-linux: clean
-	GOOS=linux GOARCH=amd64 go build -o bin/receiver-linux_amd64
+	GOOS=linux GOARCH=amd64 go build -o $(BINARY_DIR)/$(BINARY)_linux-amd64
 
 clean:
-	rm -f bin/receiver
-	rm -f bin/receiver-linux_amd64
+	rm -fr $(BINARY_DIR)
 
 deps:
 	go get github.com/Masterminds/glide
