@@ -374,7 +374,7 @@ func main() {
 
 	urlList := []string{
 		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain,
-		uriScheme + "://" + application.Username + "." + application.AppName + "." + config.BaseDomain,
+		uriScheme + "://" + application.Username + "-" + application.AppName + "." + config.BaseDomain,
 	}
 
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
