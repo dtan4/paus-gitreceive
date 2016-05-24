@@ -384,7 +384,7 @@ func main() {
 	var url string
 
 	for _, identifier := range identifiers {
-		url = uriScheme + "://" + identifier + "." + config.BaseDomain
+		url = strings.ToLower(uriScheme + "://" + identifier + "." + config.BaseDomain)
 		fmt.Println("         " + url)
 	}
 
