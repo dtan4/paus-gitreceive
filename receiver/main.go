@@ -178,24 +178,29 @@ func registerApplicationMetadata(application *Application, etcd *Etcd) error {
 	return nil
 }
 
-func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *Etcd) error {
+func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *Etcd) ([]string, error) {
 	vulcand := NewVulcand(etcd)
 
 	if err := vulcand.SetBackend(application, baseDomain); err != nil {
-		return errors.Wrap(err, "Failed to set vulcand backend.")
+		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
 	}
 
-	for _, identifier := range []string{application.ProjectName, fmt.Sprintf("%s-%s", application.Username, application.AppName)} {
+	identifiers := []string{
+		strings.ToLower(application.ProjectName),
+		strings.ToLower(application.Username + "-" + application.AppName),
+	}
+
+	for _, identifier := range identifiers {
 		if err := vulcand.SetFrontend(application, identifier, baseDomain); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
+			return nil, errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
 		}
 	}
 
 	if err := vulcand.SetServer(application, webContainer, baseDomain); err != nil {
-		return errors.Wrap(err, "Failed to set vulcand backend.")
+		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
 	}
 
-	return nil
+	return identifiers, nil
 }
 
 func removeUnpackedFiles(repositoryPath, newComposeFilePath string) error {
@@ -360,7 +365,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = registerVulcandInformation(application, config.BaseDomain, webContainer, etcd); err != nil {
+	identifiers, err := registerVulcandInformation(application, config.BaseDomain, webContainer, etcd)
+
+	if err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -372,14 +379,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	urlList := []string{
-		uriScheme + "://" + application.ProjectName + "." + config.BaseDomain,
-		uriScheme + "://" + application.Username + "-" + application.AppName + "." + config.BaseDomain,
-	}
-
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
 
-	for _, url := range urlList {
+	var url string
+
+	for _, identifier := range identifiers {
+		url = uriScheme + "://" + identifier + "." + config.BaseDomain
 		fmt.Println("         " + url)
 	}
 
