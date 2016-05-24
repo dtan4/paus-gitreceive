@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -69,7 +70,7 @@ func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain s
 	frontend := VulcandFrontend{
 		Type:      "http",
 		BackendId: application.ProjectName,
-		Route:     fmt.Sprintf("Host(`%s.%s`) && PathRegexp(`/`)", identifier, baseDomain),
+		Route:     fmt.Sprintf("Host(`%s.%s`) && PathRegexp(`/`)", strings.ToLower(identifier), strings.ToLower(baseDomain)),
 		Settings: VulcandFrontendSettings{
 			TrustForwardHeader: true,
 		},
