@@ -59,10 +59,6 @@ func injectBuildArgs(application *model.Application, composeFile *ComposeFile, e
 		return errors.Wrap(err, "Failed to get environment build args.")
 	}
 
-	if args == nil {
-		return nil
-	}
-
 	composeFile.InjectBuildArgs(args)
 
 	return nil
@@ -73,10 +69,6 @@ func injectEnvironmentVariables(application *model.Application, composeFile *Com
 
 	if err != nil {
 		return errors.Wrap(err, "Failed to get environment variables.")
-	}
-
-	if envs == nil {
-		return nil
 	}
 
 	composeFile.InjectEnvironmentVariables(envs)

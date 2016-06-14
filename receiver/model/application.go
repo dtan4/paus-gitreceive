@@ -40,19 +40,19 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 	userDirectoryKey := "/paus/users/" + app.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	buildArgsKey := appDirectoryKey + "/build-args/"
 
 	if !etcd.HasKey(buildArgsKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	buildArgKeys, err := etcd.List(buildArgsKey, false)
@@ -80,19 +80,19 @@ func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]strin
 	userDirectoryKey := "/paus/users/" + app.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
 
 	if !etcd.HasKey(appDirectoryKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	envDirectoryKey := appDirectoryKey + "/envs/"
 
 	if !etcd.HasKey(envDirectoryKey) {
-		return nil, nil
+		return map[string]string{}, nil
 	}
 
 	envKeys, err := etcd.List(envDirectoryKey, false)
