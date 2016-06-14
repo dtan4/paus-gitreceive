@@ -74,43 +74,17 @@ func getSubmodules(repositoryPath string) error {
 }
 
 func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
-
-	if !etcd.HasKey(userDirectoryKey) {
-		return nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		return nil
-	}
-
-	buildArgsKey := appDirectoryKey + "/build-args/"
-
-	if !etcd.HasKey(buildArgsKey) {
-		return nil
-	}
-
-	buildArgKeys, err := etcd.List(buildArgsKey, false)
+	args, err := application.BuildArgs(etcd)
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get build arg keys.")
+		return errors.Wrap(err, "Failed to get environment build args.")
 	}
 
-	buildArgs := map[string]string{}
-
-	for _, key := range buildArgKeys {
-		value, err := etcd.Get(key)
-
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to get build arg value. key: %s", key))
-		}
-
-		buildArgs[strings.Replace(key, buildArgsKey, "", 1)] = value
+	if args == nil {
+		return nil
 	}
 
-	composeFile.InjectBuildArgs(buildArgs)
+	composeFile.InjectBuildArgs(args)
 
 	return nil
 }

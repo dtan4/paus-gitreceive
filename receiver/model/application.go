@@ -32,6 +32,46 @@ func ApplicationFromArgs(args []string) *Application {
 	}
 }
 
+func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
+	var args map[string]string
+
+	userDirectoryKey := "/paus/users/" + app.Username
+
+	if !etcd.HasKey(userDirectoryKey) {
+		return nil, nil
+	}
+
+	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
+
+	if !etcd.HasKey(appDirectoryKey) {
+		return nil, nil
+	}
+
+	buildArgsKey := appDirectoryKey + "/build-args/"
+
+	if !etcd.HasKey(buildArgsKey) {
+		return nil, nil
+	}
+
+	buildArgKeys, err := etcd.List(buildArgsKey, false)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to get build arg keys.")
+	}
+
+	for _, key := range buildArgKeys {
+		value, err := etcd.Get(key)
+
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("Failed to get build arg value. key: %s", key))
+		}
+
+		args[strings.Replace(key, buildArgsKey, "", 1)] = value
+	}
+
+	return args, nil
+}
+
 func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]string, error) {
 	var envs map[string]string
 
