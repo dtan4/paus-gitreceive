@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"bufio"
@@ -30,6 +30,7 @@ type Config struct {
 	DockerHost    string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
 	EtcdEndpoint  string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
 	RepositoryDir string `envconfig:"repository_dir" default:"/repos"`
+	URIScheme     string `envconfig:"uri_scheme"     default:"http"`
 }
 
 func loadConfigFromFile(filePath string) (map[string]string, error) {

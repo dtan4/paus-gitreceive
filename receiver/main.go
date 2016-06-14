@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
@@ -181,7 +182,7 @@ func registerApplicationMetadata(application *model.Application, etcd *store.Etc
 func main() {
 	printVersion()
 
-	config, err := LoadConfig()
+	config, err := config.LoadConfig()
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -284,19 +285,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	uriScheme, err := etcd.Get("/paus/uri-scheme")
-
-	if err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
 	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
 
 	var url string
 
 	for _, identifier := range identifiers {
-		url = strings.ToLower(uriScheme + "://" + identifier + "." + config.BaseDomain)
+		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
 		fmt.Println("         " + url)
 	}
 
