@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
@@ -110,4 +112,26 @@ func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]strin
 	}
 
 	return envs, nil
+}
+
+func (app *Application) RegisterMetadata(etcd *store.Etcd) error {
+	userDirectoryKey := "/paus/users/" + app.Username
+
+	if !etcd.HasKey(userDirectoryKey) {
+		_ = etcd.Mkdir(userDirectoryKey)
+	}
+
+	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
+
+	if !etcd.HasKey(appDirectoryKey) {
+		_ = etcd.Mkdir(appDirectoryKey)
+		_ = etcd.Mkdir(appDirectoryKey + "/envs")
+		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
+	}
+
+	if err := etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+		return errors.Wrap(err, "Failed to set revisdion.")
+	}
+
+	return nil
 }

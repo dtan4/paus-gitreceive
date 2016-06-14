@@ -105,28 +105,6 @@ func injectEnvironmentVariables(application *model.Application, composeFile *Com
 	return nil
 }
 
-func registerApplicationMetadata(application *model.Application, etcd *store.Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
-
-	if !etcd.HasKey(userDirectoryKey) {
-		_ = etcd.Mkdir(userDirectoryKey)
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		_ = etcd.Mkdir(appDirectoryKey)
-		_ = etcd.Mkdir(appDirectoryKey + "/envs")
-		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
-	}
-
-	if err := etcd.Set(appDirectoryKey+"/revisions/"+application.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
-		return errors.Wrap(err, "Failed to set revisdion.")
-	}
-
-	return nil
-}
-
 func main() {
 	printVersion()
 
@@ -221,7 +199,7 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = registerApplicationMetadata(application, etcd); err != nil {
+	if err = application.RegisterMetadata(etcd); err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
