@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
@@ -55,7 +56,7 @@ func NewVulcand(etcd *store.Etcd) *Vulcand {
 }
 
 // {"Type": "http"}
-func (v *Vulcand) SetBackend(application *Application, baseDomain string) error {
+func (v *Vulcand) SetBackend(application *model.Application, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/backend", VulcandKeyBase, application.ProjectName)
 
 	if err := v.etcd.Set(key, httpBackendJSON); err != nil {
@@ -66,7 +67,7 @@ func (v *Vulcand) SetBackend(application *Application, baseDomain string) error 
 }
 
 // {"Type": "http", "BackendId": "$identifier", "Route": "Host(`$identifier.$base_domain`) && PathRegexp(`/`)", "Settings": {"TrustForwardHeader": true}}
-func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain string) error {
+func (v *Vulcand) SetFrontend(application *model.Application, identifier, baseDomain string) error {
 	key := fmt.Sprintf("%s/frontends/%s/frontend", VulcandKeyBase, identifier)
 	frontend := VulcandFrontend{
 		Type:      "http",
@@ -95,7 +96,7 @@ func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain s
 }
 
 // {"URL": "http://$web_container_host_ip:$web_container_port"}
-func (v *Vulcand) SetServer(application *Application, container *Container, baseDomain string) error {
+func (v *Vulcand) SetServer(application *model.Application, container *Container, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/servers/%s", VulcandKeyBase, application.ProjectName, container.ContainerId)
 	server := VulcandServer{
 		URL: fmt.Sprintf("http://%s:%s", container.HostIP(), container.HostPort()),

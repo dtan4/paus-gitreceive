@@ -13,15 +13,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
-func appDirExists(application *Application, etcd *store.Etcd) bool {
+func appDirExists(application *model.Application, etcd *store.Etcd) bool {
 	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
 }
 
-func deploy(dockerHost string, application *Application, composeFilePath string) (string, error) {
+func deploy(dockerHost string, application *model.Application, composeFilePath string) (string, error) {
 	var err error
 
 	compose := NewCompose(dockerHost, composeFilePath, application.ProjectName)
@@ -73,7 +74,7 @@ func getSubmodules(repositoryPath string) error {
 	return nil
 }
 
-func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *store.Etcd) error {
+func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -115,7 +116,7 @@ func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *s
 	return nil
 }
 
-func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *store.Etcd) error {
+func injectEnvironmentVariables(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -157,7 +158,7 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 	return nil
 }
 
-func registerApplicationMetadata(application *Application, etcd *store.Etcd) error {
+func registerApplicationMetadata(application *model.Application, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -179,7 +180,7 @@ func registerApplicationMetadata(application *Application, etcd *store.Etcd) err
 	return nil
 }
 
-func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *store.Etcd) ([]string, error) {
+func registerVulcandInformation(application *model.Application, baseDomain string, webContainer *Container, etcd *store.Etcd) ([]string, error) {
 	vulcand := NewVulcand(etcd)
 
 	if err := vulcand.SetBackend(application, baseDomain); err != nil {
@@ -286,7 +287,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	application := ApplicationFromArgs(os.Args[1:])
+	application := model.ApplicationFromArgs(os.Args[1:])
 
 	if !appDirExists(application, etcd) {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
