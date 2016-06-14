@@ -181,31 +181,6 @@ func registerApplicationMetadata(application *model.Application, etcd *store.Etc
 	return nil
 }
 
-func registerVulcandInformation(application *model.Application, baseDomain string, webContainer *model.Container, etcd *store.Etcd) ([]string, error) {
-	vulcand := vulcand.NewVulcand(etcd)
-
-	if err := vulcand.SetBackend(application, baseDomain); err != nil {
-		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
-	}
-
-	identifiers := []string{
-		strings.ToLower(application.ProjectName),
-		strings.ToLower(application.Username + "-" + application.AppName),
-	}
-
-	for _, identifier := range identifiers {
-		if err := vulcand.SetFrontend(application, identifier, baseDomain); err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
-		}
-	}
-
-	if err := vulcand.SetServer(application, webContainer, baseDomain); err != nil {
-		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
-	}
-
-	return identifiers, nil
-}
-
 func removeUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
 
@@ -370,7 +345,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	identifiers, err := registerVulcandInformation(application, config.BaseDomain, webContainer, etcd)
+	identifiers, err := vulcand.RegisterInformation(etcd, application, config.BaseDomain, webContainer)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
