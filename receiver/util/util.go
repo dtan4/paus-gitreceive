@@ -2,15 +2,45 @@ package util
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 )
+
+func printLine(r io.Reader) {
+	sc := bufio.NewScanner(r)
+
+	for sc.Scan() {
+		fmt.Println("       " + sc.Text())
+	}
+}
+
+func GetSubmodules(repositoryPath string) error {
+	dir := filepath.Join(repositoryPath, ".git")
+
+	stat, err := os.Stat(dir)
+
+	if err == nil && stat.IsDir() {
+		if e := os.RemoveAll(dir); e != nil {
+			return errors.Wrap(e, fmt.Sprintf("Failed to remove %s.", dir))
+		}
+	}
+
+	cmd := exec.Command("/usr/local/bin/get-submodules")
+
+	if err = RunCommand(cmd); err != nil {
+		return errors.Wrap(err, "Failed to get submodules.")
+	}
+
+	return nil
+}
 
 func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
@@ -27,6 +57,31 @@ func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 				return errors.Wrap(err, fmt.Sprintf("Failed to remove files in %s.", path))
 			}
 		}
+	}
+
+	return nil
+}
+
+func RunCommand(cmd *exec.Cmd) error {
+	stdout, err := cmd.StdoutPipe()
+
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("creating stdout failed. command: %v", cmd.Args))
+	}
+
+	stderr, err := cmd.StderrPipe()
+
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("creating stderr failed. command: %v", cmd.Args))
+	}
+
+	cmd.Start()
+
+	go printLine(stdout)
+	go printLine(stderr)
+
+	if err = cmd.Wait(); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("command execution failed. command: %v", cmd.Args))
 	}
 
 	return nil

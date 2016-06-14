@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -51,26 +50,6 @@ func deploy(dockerHost string, application *model.Application, composeFilePath s
 	}
 
 	return webContainerId, nil
-}
-
-func getSubmodules(repositoryPath string) error {
-	dir := filepath.Join(repositoryPath, ".git")
-
-	stat, err := os.Stat(dir)
-
-	if err == nil && stat.IsDir() {
-		if e := os.RemoveAll(dir); e != nil {
-			return errors.Wrap(e, fmt.Sprintf("Failed to remove %s.", dir))
-		}
-	}
-
-	cmd := exec.Command("/usr/local/bin/get-submodules")
-
-	if err = RunCommand(cmd); err != nil {
-		return errors.Wrap(err, "Failed to get submodules.")
-	}
-
-	return nil
 }
 
 func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
@@ -143,7 +122,7 @@ func main() {
 
 	fmt.Println("=====> Getting submodules ...")
 
-	if err = getSubmodules(repositoryPath); err != nil {
+	if err = util.GetSubmodules(repositoryPath); err != nil {
 		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to get submodules. path: %s", repositoryPath)))
 		os.Exit(1)
 	}

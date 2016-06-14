@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +30,7 @@ func (c *Compose) Build() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "build")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := RunCommand(cmd); err != nil {
+	if err := util.RunCommand(cmd); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to build Docker Compose project. projectName: %s", c.projectName))
 	}
 
@@ -52,7 +53,7 @@ func (c *Compose) Pull() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "pull")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := RunCommand(cmd); err != nil {
+	if err := util.RunCommand(cmd); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to pull images in Docker Compose project. projectName: %s", c.projectName))
 	}
 
@@ -63,7 +64,7 @@ func (c *Compose) Up() error {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
-	if err := RunCommand(cmd); err != nil {
+	if err := util.RunCommand(cmd); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to start Docker Compose project. projectName: %s", c.projectName))
 	}
 
