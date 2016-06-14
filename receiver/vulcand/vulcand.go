@@ -1,4 +1,4 @@
-package main
+package vulcand
 
 import (
 	"bytes"
@@ -23,27 +23,8 @@ type Vulcand struct {
 	etcd *store.Etcd
 }
 
-type VulcandBackend struct {
-	Type string `json:"Type"`
-}
-
-type VulcandServer struct {
-	URL string `json:"URL"`
-}
-
-type VulcandFrontend struct {
-	Type      string                  `json:"Type"`
-	BackendId string                  `json:"BackendId"`
-	Route     string                  `json:"Route"`
-	Settings  VulcandFrontendSettings `json:"Settings"`
-}
-
-type VulcandFrontendSettings struct {
-	TrustForwardHeader bool `json:"TrustForwardHeader"`
-}
-
 func NewVulcand(etcd *store.Etcd) *Vulcand {
-	backend := VulcandBackend{
+	backend := Backend{
 		Type: "http",
 	}
 
@@ -69,11 +50,11 @@ func (v *Vulcand) SetBackend(application *model.Application, baseDomain string) 
 // {"Type": "http", "BackendId": "$identifier", "Route": "Host(`$identifier.$base_domain`) && PathRegexp(`/`)", "Settings": {"TrustForwardHeader": true}}
 func (v *Vulcand) SetFrontend(application *model.Application, identifier, baseDomain string) error {
 	key := fmt.Sprintf("%s/frontends/%s/frontend", VulcandKeyBase, identifier)
-	frontend := VulcandFrontend{
+	frontend := Frontend{
 		Type:      "http",
 		BackendId: application.ProjectName,
 		Route:     fmt.Sprintf("Host(`%s.%s`) && PathRegexp(`/`)", strings.ToLower(identifier), strings.ToLower(baseDomain)),
-		Settings: VulcandFrontendSettings{
+		Settings: FrontendSettings{
 			TrustForwardHeader: true,
 		},
 	}
@@ -98,7 +79,7 @@ func (v *Vulcand) SetFrontend(application *model.Application, identifier, baseDo
 // {"URL": "http://$web_container_host_ip:$web_container_port"}
 func (v *Vulcand) SetServer(application *model.Application, container *model.Container, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/servers/%s", VulcandKeyBase, application.ProjectName, container.ContainerId)
-	server := VulcandServer{
+	server := Server{
 		URL: fmt.Sprintf("http://%s:%s", container.HostIP(), container.HostPort()),
 	}
 

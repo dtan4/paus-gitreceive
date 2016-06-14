@@ -15,6 +15,7 @@ import (
 
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
+	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 	"github.com/pkg/errors"
 )
 
@@ -181,7 +182,7 @@ func registerApplicationMetadata(application *model.Application, etcd *store.Etc
 }
 
 func registerVulcandInformation(application *model.Application, baseDomain string, webContainer *model.Container, etcd *store.Etcd) ([]string, error) {
-	vulcand := NewVulcand(etcd)
+	vulcand := vulcand.NewVulcand(etcd)
 
 	if err := vulcand.SetBackend(application, baseDomain); err != nil {
 		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
