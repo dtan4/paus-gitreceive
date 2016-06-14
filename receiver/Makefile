@@ -20,14 +20,15 @@ $(BINARYDIR)/$(BINARY): $(SOURCES)
 $(BINARYDIR)/$(BINARY)$(LINUX_AMD64_SUFFIX): $(SOURCES)
 	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARYDIR)/$(BINARY)$(LINUX_AMD64_SUFFIX)
 
+.PHONY: clean
 clean:
 	rm -fr $(BINARYDIR)
 
+.PHONY: deps
 deps:
 	go get github.com/Masterminds/glide
 	glide install
 
+.PHONY: test
 test:
 	go test
-
-.PHONY: build build-linux clean deps test
