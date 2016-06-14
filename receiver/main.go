@@ -43,13 +43,13 @@ func deploy(dockerHost string, application *model.Application, composeFilePath s
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
-	webContainerId, err := compose.GetContainerId("web")
+	webContainerID, err := compose.GetContainerId("web")
 
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
-	return webContainerId, nil
+	return webContainerID, nil
 }
 
 func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
@@ -160,7 +160,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerId, err := deploy(config.DockerHost, application, newComposeFilePath)
+	webContainerID, err := deploy(config.DockerHost, application, newComposeFilePath)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -169,7 +169,7 @@ func main() {
 
 	fmt.Println("=====> Application container is launched.")
 
-	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerId)
+	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
