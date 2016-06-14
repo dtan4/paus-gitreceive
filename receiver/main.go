@@ -116,43 +116,17 @@ func injectBuildArgs(application *model.Application, composeFile *ComposeFile, e
 }
 
 func injectEnvironmentVariables(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
-
-	if !etcd.HasKey(userDirectoryKey) {
-		return nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		return nil
-	}
-
-	envDirectoryKey := appDirectoryKey + "/envs/"
-
-	if !etcd.HasKey(envDirectoryKey) {
-		return nil
-	}
-
-	envKeys, err := etcd.List(envDirectoryKey, false)
+	envs, err := application.EnvironmentVariables(etcd)
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get environment variable keys.")
+		return errors.Wrap(err, "Failed to get environment variables.")
 	}
 
-	environmentVariables := map[string]string{}
-
-	for _, key := range envKeys {
-		value, err := etcd.Get(key)
-
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to get environment variable value. key: %s", key))
-		}
-
-		environmentVariables[strings.Replace(key, envDirectoryKey, "", 1)] = value
+	if envs == nil {
+		return nil
 	}
 
-	composeFile.InjectEnvironmentVariables(environmentVariables)
+	composeFile.InjectEnvironmentVariables(envs)
 
 	return nil
 }
