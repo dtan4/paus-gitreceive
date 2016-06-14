@@ -5,16 +5,20 @@ GOVERSION := $(subst go version ,,$(shell go version))
 
 BINARYDIR := bin
 BINARY := receiver
+LINUX_AMD64_SUFFIX := _linux-amd64
+
+SOURCEDIR := .
+SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -type f)
 
 LDFLAGS := -ldflags="-w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -X \"main.BuildTime=$(BUILDTIME)\" -X \"main.GoVersion=$(GOVERSION)\""
 
-default: build
+.DEFAULT_GOAL := $(BINARYDIR)/$(BINARY)
 
-build: clean
+$(BINARYDIR)/$(BINARY): $(SOURCES)
 	go build $(LDFLAGS) -o $(BINARYDIR)/$(BINARY)
 
-build-linux: clean
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARYDIR)/$(BINARY)_linux-amd64
+$(BINARYDIR)/$(BINARY)$(LINUX_AMD64_SUFFIX): $(SOURCES)
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARYDIR)/$(BINARY)$(LINUX_AMD64_SUFFIX)
 
 clean:
 	rm -fr $(BINARYDIR)
