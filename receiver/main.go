@@ -269,6 +269,8 @@ func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 }
 
 func main() {
+	printVersion()
+
 	config, err := LoadConfig()
 
 	if err != nil {
