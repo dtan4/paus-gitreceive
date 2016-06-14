@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +19,7 @@ var (
 )
 
 type Vulcand struct {
-	etcd *Etcd
+	etcd *store.Etcd
 }
 
 type VulcandBackend struct {
@@ -40,7 +41,7 @@ type VulcandFrontendSettings struct {
 	TrustForwardHeader bool `json:"TrustForwardHeader"`
 }
 
-func NewVulcand(etcd *Etcd) *Vulcand {
+func NewVulcand(etcd *store.Etcd) *Vulcand {
 	backend := VulcandBackend{
 		Type: "http",
 	}

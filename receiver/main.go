@@ -13,10 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
-func appDirExists(application *Application, etcd *Etcd) bool {
+func appDirExists(application *Application, etcd *store.Etcd) bool {
 	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
 }
 
@@ -72,7 +73,7 @@ func getSubmodules(repositoryPath string) error {
 	return nil
 }
 
-func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
+func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -114,7 +115,7 @@ func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *E
 	return nil
 }
 
-func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
+func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -156,7 +157,7 @@ func injectEnvironmentVariables(application *Application, composeFile *ComposeFi
 	return nil
 }
 
-func registerApplicationMetadata(application *Application, etcd *Etcd) error {
+func registerApplicationMetadata(application *Application, etcd *store.Etcd) error {
 	userDirectoryKey := "/paus/users/" + application.Username
 
 	if !etcd.HasKey(userDirectoryKey) {
@@ -178,7 +179,7 @@ func registerApplicationMetadata(application *Application, etcd *Etcd) error {
 	return nil
 }
 
-func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *Etcd) ([]string, error) {
+func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *store.Etcd) ([]string, error) {
 	vulcand := NewVulcand(etcd)
 
 	if err := vulcand.SetBackend(application, baseDomain); err != nil {
@@ -278,7 +279,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	etcd, err := NewEtcd(config.EtcdEndpoint)
+	etcd, err := store.NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
