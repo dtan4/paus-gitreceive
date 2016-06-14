@@ -23,7 +23,7 @@ func appDirExists(application *model.Application, etcd *store.Etcd) bool {
 func deploy(dockerHost string, application *model.Application, composeFilePath string) (string, error) {
 	var err error
 
-	compose := NewCompose(dockerHost, composeFilePath, application.ProjectName)
+	compose := model.NewCompose(dockerHost, composeFilePath, application.ProjectName)
 
 	fmt.Println("=====> Building ...")
 
@@ -43,7 +43,7 @@ func deploy(dockerHost string, application *model.Application, composeFilePath s
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
-	webContainerID, err := compose.GetContainerId("web")
+	webContainerID, err := compose.GetContainerID("web")
 
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))

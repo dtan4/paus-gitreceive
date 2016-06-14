@@ -1,4 +1,4 @@
-package main
+package model
 
 // TODO: Use github.com/docker/libcompose
 
@@ -37,7 +37,7 @@ func (c *Compose) Build() error {
 	return nil
 }
 
-func (c *Compose) GetContainerId(service string) (string, error) {
+func (c *Compose) GetContainerID(service string) (string, error) {
 	cmd := exec.Command("docker-compose", "-f", c.composeFilePath, "-p", c.projectName, "ps", "-q", service)
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 	out, err := cmd.Output()
