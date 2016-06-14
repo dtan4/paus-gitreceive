@@ -180,7 +180,7 @@ func registerApplicationMetadata(application *model.Application, etcd *store.Etc
 	return nil
 }
 
-func registerVulcandInformation(application *model.Application, baseDomain string, webContainer *Container, etcd *store.Etcd) ([]string, error) {
+func registerVulcandInformation(application *model.Application, baseDomain string, webContainer *model.Container, etcd *store.Etcd) ([]string, error) {
 	vulcand := NewVulcand(etcd)
 
 	if err := vulcand.SetBackend(application, baseDomain); err != nil {
@@ -355,7 +355,7 @@ func main() {
 
 	fmt.Println("=====> Application container is launched.")
 
-	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
+	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerId)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)

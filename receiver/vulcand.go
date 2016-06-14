@@ -96,7 +96,7 @@ func (v *Vulcand) SetFrontend(application *model.Application, identifier, baseDo
 }
 
 // {"URL": "http://$web_container_host_ip:$web_container_port"}
-func (v *Vulcand) SetServer(application *model.Application, container *Container, baseDomain string) error {
+func (v *Vulcand) SetServer(application *model.Application, container *model.Container, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/servers/%s", VulcandKeyBase, application.ProjectName, container.ContainerId)
 	server := VulcandServer{
 		URL: fmt.Sprintf("http://%s:%s", container.HostIP(), container.HostPort()),
