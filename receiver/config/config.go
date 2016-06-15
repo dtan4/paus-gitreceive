@@ -22,6 +22,7 @@ var (
 		"DockerHost",
 		"EtcdEndpoint",
 		"RepositoryDir",
+		"URIScheme",
 	}
 )
 
