@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"os"
@@ -29,13 +29,17 @@ func fileExists(filePath string) bool {
 	return err == nil
 }
 
-func setup() {
+func fixturePath(name string) string {
 	workingDir, _ := os.Getwd()
 
-	V1FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v1.yml")
-	V2FilePath = filepath.Join(workingDir, "fixtures", "docker-compose-v2.yml")
-	V2FilePathBuildArg = filepath.Join(workingDir, "fixtures", "docker-compose-v2-buildarg.yml")
-	V2FilePathNoBuildEnv = filepath.Join(workingDir, "fixtures", "docker-compose-v2-nobuildenv.yml")
+	return filepath.Join(workingDir, "..", "fixtures", name)
+}
+
+func setup() {
+	V1FilePath = fixturePath("docker-compose-v1.yml")
+	V2FilePath = fixturePath("docker-compose-v2.yml")
+	V2FilePathBuildArg = fixturePath("docker-compose-v2-buildarg.yml")
+	V2FilePathNoBuildEnv = fixturePath("docker-compose-v2-nobuildenv.yml")
 	V1ComposeFile, _ = NewComposeFile(V1FilePath)
 	V2ComposeFile, _ = NewComposeFile(V2FilePath)
 	V2ComposeFileBuildArg, _ = NewComposeFile(V2FilePathBuildArg)

@@ -68,7 +68,7 @@ func initialize() (*config.Config, *store.Etcd, error) {
 	return config, etcd, nil
 }
 
-func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
+func injectBuildArgs(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
 	args, err := application.BuildArgs(etcd)
 
 	if err != nil {
@@ -80,7 +80,7 @@ func injectBuildArgs(application *model.Application, composeFile *ComposeFile, e
 	return nil
 }
 
-func injectEnvironmentVariables(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
+func injectEnvironmentVariables(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
 	envs, err := application.EnvironmentVariables(etcd)
 
 	if err != nil {
@@ -100,7 +100,7 @@ func prepareComposeFile(repositoryPath string, application *model.Application, e
 	}
 
 	fmt.Println("=====> docker-compose.yml was found")
-	composeFile, err := NewComposeFile(composeFilePath)
+	composeFile, err := model.NewComposeFile(composeFilePath)
 
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to load docker-compose.yml")
