@@ -1,4 +1,4 @@
-package main
+package vulcand
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
@@ -17,47 +19,34 @@ var (
 	httpBackendJSON string
 )
 
-type Vulcand struct {
-	etcd *Etcd
-}
-
-type VulcandBackend struct {
-	Type string `json:"Type"`
-}
-
-type VulcandServer struct {
-	URL string `json:"URL"`
-}
-
-type VulcandFrontend struct {
-	Type      string                  `json:"Type"`
-	BackendId string                  `json:"BackendId"`
-	Route     string                  `json:"Route"`
-	Settings  VulcandFrontendSettings `json:"Settings"`
-}
-
-type VulcandFrontendSettings struct {
-	TrustForwardHeader bool `json:"TrustForwardHeader"`
-}
-
-func NewVulcand(etcd *Etcd) *Vulcand {
-	backend := VulcandBackend{
-		Type: "http",
+func RegisterInformation(etcd *store.Etcd, application *model.Application, baseDomain string, webContainer *model.Container) ([]string, error) {
+	if err := setBackend(etcd, application, baseDomain); err != nil {
+		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
 	}
 
-	b, _ := json.Marshal(backend)
-	httpBackendJSON = string(b)
-
-	return &Vulcand{
-		etcd: etcd,
+	identifiers := []string{
+		strings.ToLower(application.ProjectName),
+		strings.ToLower(application.Username + "-" + application.AppName),
 	}
+
+	for _, identifier := range identifiers {
+		if err := setFrontend(etcd, application, identifier, baseDomain); err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
+		}
+	}
+
+	if err := setServer(etcd, application, webContainer, baseDomain); err != nil {
+		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
+	}
+
+	return identifiers, nil
 }
 
 // {"Type": "http"}
-func (v *Vulcand) SetBackend(application *Application, baseDomain string) error {
+func setBackend(etcd *store.Etcd, application *model.Application, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/backend", VulcandKeyBase, application.ProjectName)
 
-	if err := v.etcd.Set(key, httpBackendJSON); err != nil {
+	if err := etcd.Set(key, httpBackendJSON); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand backend in etcd.")
 	}
 
@@ -65,13 +54,13 @@ func (v *Vulcand) SetBackend(application *Application, baseDomain string) error 
 }
 
 // {"Type": "http", "BackendId": "$identifier", "Route": "Host(`$identifier.$base_domain`) && PathRegexp(`/`)", "Settings": {"TrustForwardHeader": true}}
-func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain string) error {
+func setFrontend(etcd *store.Etcd, application *model.Application, identifier, baseDomain string) error {
 	key := fmt.Sprintf("%s/frontends/%s/frontend", VulcandKeyBase, identifier)
-	frontend := VulcandFrontend{
+	frontend := Frontend{
 		Type:      "http",
 		BackendId: application.ProjectName,
 		Route:     fmt.Sprintf("Host(`%s.%s`) && PathRegexp(`/`)", strings.ToLower(identifier), strings.ToLower(baseDomain)),
-		Settings: VulcandFrontendSettings{
+		Settings: FrontendSettings{
 			TrustForwardHeader: true,
 		},
 	}
@@ -86,7 +75,7 @@ func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain s
 	b = bytes.Replace(b, []byte("\\u0026"), []byte("&"), -1)
 	json := string(b)
 
-	if err := v.etcd.Set(key, json); err != nil {
+	if err := etcd.Set(key, json); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand frontend in etcd.")
 	}
 
@@ -94,9 +83,9 @@ func (v *Vulcand) SetFrontend(application *Application, identifier, baseDomain s
 }
 
 // {"URL": "http://$web_container_host_ip:$web_container_port"}
-func (v *Vulcand) SetServer(application *Application, container *Container, baseDomain string) error {
+func setServer(etcd *store.Etcd, application *model.Application, container *model.Container, baseDomain string) error {
 	key := fmt.Sprintf("%s/backends/%s/servers/%s", VulcandKeyBase, application.ProjectName, container.ContainerId)
-	server := VulcandServer{
+	server := Server{
 		URL: fmt.Sprintf("http://%s:%s", container.HostIP(), container.HostPort()),
 	}
 
@@ -108,7 +97,7 @@ func (v *Vulcand) SetServer(application *Application, container *Container, base
 
 	json := string(b)
 
-	if err := v.etcd.Set(key, json); err != nil {
+	if err := etcd.Set(key, json); err != nil {
 		return errors.Wrap(err, "Failed to set vulcand server in etcd.")
 	}
 

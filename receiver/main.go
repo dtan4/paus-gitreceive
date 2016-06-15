@@ -1,29 +1,29 @@
 package main
 
 import (
-	"archive/tar"
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/dtan4/paus-gitreceive/receiver/config"
+	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/store"
+	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 	"github.com/pkg/errors"
 )
 
-func appDirExists(application *Application, etcd *Etcd) bool {
+func appDirExists(application *model.Application, etcd *store.Etcd) bool {
 	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
 }
 
-func deploy(dockerHost string, application *Application, composeFilePath string) (string, error) {
+func deploy(dockerHost string, application *model.Application, composeFilePath string) (string, error) {
 	var err error
 
-	compose := NewCompose(dockerHost, composeFilePath, application.ProjectName)
+	compose := model.NewCompose(dockerHost, composeFilePath, application.ProjectName)
 
 	fmt.Println("=====> Building ...")
 
@@ -43,256 +43,116 @@ func deploy(dockerHost string, application *Application, composeFilePath string)
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
-	webContainerId, err := compose.GetContainerId("web")
+	webContainerID, err := compose.GetContainerID("web")
 
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
 	}
 
-	return webContainerId, nil
+	return webContainerID, nil
 }
 
-func getSubmodules(repositoryPath string) error {
-	dir := filepath.Join(repositoryPath, ".git")
-
-	stat, err := os.Stat(dir)
-
-	if err == nil && stat.IsDir() {
-		if e := os.RemoveAll(dir); e != nil {
-			return errors.Wrap(e, fmt.Sprintf("Failed to remove %s.", dir))
-		}
-	}
-
-	cmd := exec.Command("/usr/local/bin/get-submodules")
-
-	if err = RunCommand(cmd); err != nil {
-		return errors.Wrap(err, "Failed to get submodules.")
-	}
-
-	return nil
-}
-
-func injectBuildArgs(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
-
-	if !etcd.HasKey(userDirectoryKey) {
-		return nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		return nil
-	}
-
-	buildArgsKey := appDirectoryKey + "/build-args/"
-
-	if !etcd.HasKey(buildArgsKey) {
-		return nil
-	}
-
-	buildArgKeys, err := etcd.List(buildArgsKey, false)
+func initialize() (*config.Config, *store.Etcd, error) {
+	config, err := config.LoadConfig()
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get build arg keys.")
+		return nil, nil, errors.Wrap(err, "Failed to load config.")
 	}
 
-	buildArgs := map[string]string{}
-
-	for _, key := range buildArgKeys {
-		value, err := etcd.Get(key)
-
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to get build arg value. key: %s", key))
-		}
-
-		buildArgs[strings.Replace(key, buildArgsKey, "", 1)] = value
-	}
-
-	composeFile.InjectBuildArgs(buildArgs)
-
-	return nil
-}
-
-func injectEnvironmentVariables(application *Application, composeFile *ComposeFile, etcd *Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
-
-	if !etcd.HasKey(userDirectoryKey) {
-		return nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		return nil
-	}
-
-	envDirectoryKey := appDirectoryKey + "/envs/"
-
-	if !etcd.HasKey(envDirectoryKey) {
-		return nil
-	}
-
-	envKeys, err := etcd.List(envDirectoryKey, false)
+	etcd, err := store.NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get environment variable keys.")
+		return nil, nil, errors.Wrap(err, "Failed to initialize etcd store.")
 	}
 
-	environmentVariables := map[string]string{}
+	return config, etcd, nil
+}
 
-	for _, key := range envKeys {
-		value, err := etcd.Get(key)
+func injectBuildArgs(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
+	args, err := application.BuildArgs(etcd)
 
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to get environment variable value. key: %s", key))
-		}
-
-		environmentVariables[strings.Replace(key, envDirectoryKey, "", 1)] = value
+	if err != nil {
+		return errors.Wrap(err, "Failed to get environment build args.")
 	}
 
-	composeFile.InjectEnvironmentVariables(environmentVariables)
+	composeFile.InjectBuildArgs(args)
 
 	return nil
 }
 
-func registerApplicationMetadata(application *Application, etcd *Etcd) error {
-	userDirectoryKey := "/paus/users/" + application.Username
+func injectEnvironmentVariables(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
+	envs, err := application.EnvironmentVariables(etcd)
 
-	if !etcd.HasKey(userDirectoryKey) {
-		_ = etcd.Mkdir(userDirectoryKey)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get environment variables.")
 	}
 
-	appDirectoryKey := userDirectoryKey + "/apps/" + application.AppName
-
-	if !etcd.HasKey(appDirectoryKey) {
-		_ = etcd.Mkdir(appDirectoryKey)
-		_ = etcd.Mkdir(appDirectoryKey + "/envs")
-		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
-	}
-
-	if err := etcd.Set(appDirectoryKey+"/revisions/"+application.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
-		return errors.Wrap(err, "Failed to set revisdion.")
-	}
+	composeFile.InjectEnvironmentVariables(envs)
 
 	return nil
 }
 
-func registerVulcandInformation(application *Application, baseDomain string, webContainer *Container, etcd *Etcd) ([]string, error) {
-	vulcand := NewVulcand(etcd)
+func prepareComposeFile(repositoryPath string, application *model.Application, etcd *store.Etcd) (string, error) {
+	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
 
-	if err := vulcand.SetBackend(application, baseDomain); err != nil {
-		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
+	if _, err := os.Stat(composeFilePath); err != nil {
+		return "", errors.Wrap(err, "docker-compose.yml was not found! path: "+composeFilePath)
 	}
 
-	identifiers := []string{
-		strings.ToLower(application.ProjectName),
-		strings.ToLower(application.Username + "-" + application.AppName),
+	fmt.Println("=====> docker-compose.yml was found")
+	composeFile, err := model.NewComposeFile(composeFilePath)
+
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to load docker-compose.yml")
 	}
+
+	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
+		return "", errors.Wrap(err, "Failed to inject build args.")
+	}
+
+	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
+		return "", errors.Wrap(err, "Failed to inject environment variables.")
+	}
+
+	composeFile.RewritePortBindings()
+	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
+
+	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
+		return "", errors.Wrap(err, "Failed to save docker-compose.yml. path: "+newComposeFilePath)
+	}
+
+	return newComposeFilePath, nil
+}
+
+func printDeployedURLs(repository string, config *config.Config, identifiers []string) {
+	var url string
+
+	fmt.Println("=====> " + repository + " was successfully deployed at:")
 
 	for _, identifier := range identifiers {
-		if err := vulcand.SetFrontend(application, identifier, baseDomain); err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
-		}
+		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
+		fmt.Println("         " + url)
 	}
-
-	if err := vulcand.SetServer(application, webContainer, baseDomain); err != nil {
-		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
-	}
-
-	return identifiers, nil
-}
-
-func removeUnpackedFiles(repositoryPath, newComposeFilePath string) error {
-	files, err := ioutil.ReadDir(repositoryPath)
-
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to open %s.", repositoryPath))
-	}
-
-	for _, file := range files {
-		if filepath.Join(repositoryPath, file.Name()) != newComposeFilePath {
-			path := filepath.Join(repositoryPath, file.Name())
-
-			if err = os.RemoveAll(path); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("Failed to remove files in %s.", path))
-			}
-		}
-	}
-
-	return nil
-}
-
-func unpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {
-	repositoryPath := filepath.Join(repositoryDir, username, projectName)
-
-	if err := os.MkdirAll(repositoryPath, 0777); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s.", repositoryPath))
-	}
-
-	reader := tar.NewReader(stdin)
-
-	for {
-		header, err := reader.Next()
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return "", errors.Wrap(err, "Failed to iterate tarball.")
-		}
-
-		buffer := new(bytes.Buffer)
-		outPath := filepath.Join(repositoryPath, header.Name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if _, err = os.Stat(outPath); err != nil {
-				if err = os.MkdirAll(outPath, 0755); err != nil {
-					return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s from tarball.", outPath))
-				}
-			}
-
-		case tar.TypeReg, tar.TypeRegA:
-			if _, err = io.Copy(buffer, reader); err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("Failed to copy file contents in %s from tarball.", outPath))
-			}
-
-			if err = ioutil.WriteFile(outPath, buffer.Bytes(), os.FileMode(header.Mode)); err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("Failed to create file %s from tarball.", outPath))
-			}
-		}
-	}
-
-	return repositoryPath, nil
 }
 
 func main() {
 	printVersion()
 
-	config, err := LoadConfig()
+	config, etcd, err := initialize()
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	etcd, err := NewEtcd(config.EtcdEndpoint)
-
-	if err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	application := ApplicationFromArgs(os.Args[1:])
+	application := model.ApplicationFromArgs(os.Args[1:])
 
 	if !appDirExists(application, etcd) {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
 		os.Exit(1)
 	}
 
-	repositoryPath, err := unpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
+	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -306,45 +166,19 @@ func main() {
 
 	fmt.Println("=====> Getting submodules ...")
 
-	if err = getSubmodules(repositoryPath); err != nil {
+	if err = util.GetSubmodules(repositoryPath); err != nil {
 		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to get submodules. path: %s", repositoryPath)))
 		os.Exit(1)
 	}
 
-	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
-
-	if _, err := os.Stat(composeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, "=====> docker-compose.yml was NOT found!")
-		os.Exit(1)
-	}
-
-	fmt.Println("=====> docker-compose.yml was found")
-	composeFile, err := NewComposeFile(composeFilePath)
+	newComposeFilePath, err := prepareComposeFile(repositoryPath, application, etcd)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	composeFile.RewritePortBindings()
-	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
-
-	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	webContainerId, err := deploy(config.DockerHost, application, newComposeFilePath)
+	webContainerID, err := deploy(config.DockerHost, application, newComposeFilePath)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -353,7 +187,7 @@ func main() {
 
 	fmt.Println("=====> Application container is launched.")
 
-	webContainer, err := ContainerFromID(config.DockerHost, webContainerId)
+	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -362,35 +196,21 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = registerApplicationMetadata(application, etcd); err != nil {
+	if err = application.RegisterMetadata(etcd); err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	identifiers, err := registerVulcandInformation(application, config.BaseDomain, webContainer, etcd)
+	identifiers, err := vulcand.RegisterInformation(etcd, application, config.BaseDomain, webContainer)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	uriScheme, err := etcd.Get("/paus/uri-scheme")
+	printDeployedURLs(application.Repository, config, identifiers)
 
-	if err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
-
-	var url string
-
-	for _, identifier := range identifiers {
-		url = strings.ToLower(uriScheme + "://" + identifier + "." + config.BaseDomain)
-		fmt.Println("         " + url)
-	}
-
-	if err = removeUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
+	if err = util.RemoveUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
