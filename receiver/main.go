@@ -52,6 +52,22 @@ func deploy(dockerHost string, application *model.Application, composeFilePath s
 	return webContainerID, nil
 }
 
+func initialize() (*config.Config, *store.Etcd, error) {
+	config, err := config.LoadConfig()
+
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Failed to load config.")
+	}
+
+	etcd, err := store.NewEtcd(config.EtcdEndpoint)
+
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Failed to initialize etcd store.")
+	}
+
+	return config, etcd, nil
+}
+
 func injectBuildArgs(application *model.Application, composeFile *ComposeFile, etcd *store.Etcd) error {
 	args, err := application.BuildArgs(etcd)
 
@@ -76,17 +92,53 @@ func injectEnvironmentVariables(application *model.Application, composeFile *Com
 	return nil
 }
 
+func prepareComposeFile(repositoryPath string, application *model.Application, etcd *store.Etcd) (string, error) {
+	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
+
+	if _, err := os.Stat(composeFilePath); err != nil {
+		return "", errors.Wrap(err, "docker-compose.yml was not found! path: "+composeFilePath)
+	}
+
+	fmt.Println("=====> docker-compose.yml was found")
+	composeFile, err := NewComposeFile(composeFilePath)
+
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to load docker-compose.yml")
+	}
+
+	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
+		return "", errors.Wrap(err, "Failed to inject build args.")
+	}
+
+	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
+		return "", errors.Wrap(err, "Failed to inject environment variables.")
+	}
+
+	composeFile.RewritePortBindings()
+	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
+
+	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
+		return "", errors.Wrap(err, "Failed to save docker-compose.yml. path: "+newComposeFilePath)
+	}
+
+	return newComposeFilePath, nil
+}
+
+func printDeployedURLs(repository string, config *config.Config, identifiers []string) {
+	var url string
+
+	fmt.Println("=====> " + repository + " was successfully deployed at:")
+
+	for _, identifier := range identifiers {
+		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
+		fmt.Println("         " + url)
+	}
+}
+
 func main() {
 	printVersion()
 
-	config, err := config.LoadConfig()
-
-	if err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	etcd, err := store.NewEtcd(config.EtcdEndpoint)
+	config, etcd, err := initialize()
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
@@ -119,35 +171,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
-
-	if _, err := os.Stat(composeFilePath); err != nil {
-		fmt.Fprintln(os.Stderr, "=====> docker-compose.yml was NOT found!")
-		os.Exit(1)
-	}
-
-	fmt.Println("=====> docker-compose.yml was found")
-	composeFile, err := NewComposeFile(composeFilePath)
+	newComposeFilePath, err := prepareComposeFile(repositoryPath, application, etcd)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
-		errors.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	composeFile.RewritePortBindings()
-	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
-
-	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -182,14 +208,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("=====> " + application.Repository + " was successfully deployed at:")
-
-	var url string
-
-	for _, identifier := range identifiers {
-		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
-		fmt.Println("         " + url)
-	}
+	printDeployedURLs(application.Repository, config, identifiers)
 
 	if err = util.RemoveUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
 		errors.Fprint(os.Stderr, err)
