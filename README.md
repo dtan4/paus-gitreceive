@@ -22,3 +22,21 @@ paus-gitreceive does:
 | `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
 | `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos`                   | `/repos`                  |
 | `PAUS_URI_SCHEME`        |          | URI scheme of application URL (`http`&#124;`https`) | `http`     | `http`                    |
+
+## Development
+
+### Build receiver
+
+```bash
+$ cd receiver
+$ make deps
+$ make
+```
+
+### Run on local using Docker Compose
+
+```bash
+$ make docker-release-build
+$ docker-compose up -d etcd gitreceive
+$ docker-compose run --rm gitreceive-upload-key test "$(cat ~/.ssh/id_rsa.pub)"
+```
