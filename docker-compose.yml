@@ -3,7 +3,25 @@ services:
   gitreceive:
     build:
       context: .
+      dockerfile: Dockerfile.release
     ports:
       - "2222:22"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PAUS_BASE_DOMAIN=pausapp.com
+      - PAUS_DOCKER_HOST=unix:///var/run/docker.sock
+      - PAUS_ETCD_ENDPOINT=http://etcd:2379
+      - PAUS_REPOSITORY_DIR=/repos
+      - PAUS_URI_SCHEME=http
+  gitreceive-upload-key:
+    extends: gitreceive
+    volumes_from:
+      - gitreceive
+    entrypoint: /usr/local/bin/upload-key
+  etcd:
+    image: quay.io/coreos/etcd:v2.3.6
+    command: -name etcd0 -advertise-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 -initial-advertise-peer-urls http://0.0.0.0:2380 -listen-peer-urls http://0.0.0.0:2380 -initial-cluster-token etcd-cluster-1 -initial-cluster etcd0=http://0.0.0.0:2380 -initial-cluster-state new
+    ports:
+      - 2379:2379
+      - 4001:4001
