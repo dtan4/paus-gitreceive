@@ -36,7 +36,22 @@ $ make
 ### Run on local using Docker Compose
 
 ```bash
-$ make docker-release-build
-$ docker-compose up -d etcd gitreceive
-$ docker-compose run --rm gitreceive-upload-key test "$(cat ~/.ssh/id_rsa.pub)"
+# Set these as you like
+$ export PAUS_USER=dtan4
+$ export PAUS_APPNAME=docker-service-rails
+$ export SSH_PUBLIC_KEY=~/.ssh/id_rsa.github.pub
+
+$ make compose-up
+
+$ vim ~/.ssh/config
+$ cat ~/.ssh/config
+Host pausapp.com
+     Hostname 127.0.0.1
+     User git
+     Port 2222
+     IdentityFile ~/.ssh/id_rsa.github
+
+# at your application repository
+$ git remote add paus git@pausapp.com:dtan4/docker-service-rails
+$ git push paus master
 ```
