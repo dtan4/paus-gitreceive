@@ -8,6 +8,8 @@ PAUS_APPNAME ?= test
 SSH_PUBLIC_KEY ?= ~/.ssh/id_rsa.pub
 DOCKER_HOST ?= localhost
 
+.DEFAULT_GOAL := docker-release-build
+
 .PHONY: ci-docker-release
 ci-docker-release: docker-release-build
 	@docker login -e="$(DOCKER_QUAY_EMAIL)" -u="$(DOCKER_QUAY_USERNAME)" -p="$(DOCKER_QUAY_PASSWORD)" $(DOCKER_REPOSITORY)
