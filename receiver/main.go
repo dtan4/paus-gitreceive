@@ -121,7 +121,7 @@ func printDeployedURLs(repository string, config *config.Config, identifiers []s
 }
 
 func main() {
-	printVersion()
+	// printVersion()
 
 	config, etcd, err := initialize()
 
