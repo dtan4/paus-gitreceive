@@ -20,33 +20,31 @@ func appDirExists(application *model.Application, etcd *store.Etcd) bool {
 	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
 }
 
-func deploy(dockerHost string, application *model.Application, composeFilePath string) (string, error) {
+func deploy(application *model.Application, compose *model.Compose) (string, error) {
 	var err error
-
-	compose := model.NewCompose(dockerHost, composeFilePath, application.ProjectName)
 
 	fmt.Println("=====> Building ...")
 
 	if err = compose.Build(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to build application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to build application image. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
 	}
 
 	fmt.Println("=====> Pulling ...")
 
 	if err = compose.Pull(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to pull application image. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to pull application image. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
 	}
 
 	fmt.Println("=====> Deploying ...")
 
 	if err = compose.Up(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
 	}
 
 	webContainerID, err := compose.GetContainerID("web")
 
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. appName: %s, composeFilePath: %s", application.AppName, composeFilePath))
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
 	}
 
 	return webContainerID, nil
@@ -68,56 +66,43 @@ func initialize() (*config.Config, *store.Etcd, error) {
 	return config, etcd, nil
 }
 
-func injectBuildArgs(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
+func injectBuildArgs(application *model.Application, compose *model.Compose, etcd *store.Etcd) error {
 	args, err := application.BuildArgs(etcd)
 
 	if err != nil {
 		return errors.Wrap(err, "Failed to get environment build args.")
 	}
 
-	composeFile.InjectBuildArgs(args)
+	compose.InjectBuildArgs(args)
 
 	return nil
 }
 
-func injectEnvironmentVariables(application *model.Application, composeFile *model.ComposeFile, etcd *store.Etcd) error {
+func injectEnvironmentVariables(application *model.Application, compose *model.Compose, etcd *store.Etcd) error {
 	envs, err := application.EnvironmentVariables(etcd)
 
 	if err != nil {
 		return errors.Wrap(err, "Failed to get environment variables.")
 	}
 
-	composeFile.InjectEnvironmentVariables(envs)
+	compose.InjectEnvironmentVariables(envs)
 
 	return nil
 }
 
-func prepareComposeFile(repositoryPath string, application *model.Application, etcd *store.Etcd) (string, error) {
-	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
-
-	if _, err := os.Stat(composeFilePath); err != nil {
-		return "", errors.Wrap(err, "docker-compose.yml was not found! path: "+composeFilePath)
-	}
-
-	fmt.Println("=====> docker-compose.yml was found")
-	composeFile, err := model.NewComposeFile(composeFilePath)
-
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to load docker-compose.yml")
-	}
-
-	if err = injectBuildArgs(application, composeFile, etcd); err != nil {
+func prepareComposeFile(application *model.Application, compose *model.Compose, etcd *store.Etcd) (string, error) {
+	if err := injectBuildArgs(application, compose, etcd); err != nil {
 		return "", errors.Wrap(err, "Failed to inject build args.")
 	}
 
-	if err = injectEnvironmentVariables(application, composeFile, etcd); err != nil {
+	if err := injectEnvironmentVariables(application, compose, etcd); err != nil {
 		return "", errors.Wrap(err, "Failed to inject environment variables.")
 	}
 
-	composeFile.RewritePortBindings()
-	newComposeFilePath := filepath.Join(repositoryPath, "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
+	compose.RewritePortBindings()
+	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
-	if err = composeFile.SaveAs(newComposeFilePath); err != nil {
+	if err := compose.SaveAs(newComposeFilePath); err != nil {
 		return "", errors.Wrap(err, "Failed to save docker-compose.yml. path: "+newComposeFilePath)
 	}
 
@@ -171,14 +156,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	newComposeFilePath, err := prepareComposeFile(repositoryPath, application, etcd)
+	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
+
+	if _, err := os.Stat(composeFilePath); err != nil {
+		errors.Fprint(os.Stderr, errors.Wrap(err, "docker-compose.yml was not found! path: "+composeFilePath))
+		os.Exit(1)
+	}
+
+	fmt.Println("=====> docker-compose.yml was found")
+
+	compose, err := model.NewCompose(config.DockerHost, composeFilePath, application.ProjectName)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(config.DockerHost, application, newComposeFilePath)
+	newComposeFilePath, err := prepareComposeFile(application, compose, etcd)
+
+	if err != nil {
+		errors.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	webContainerID, err := deploy(application, compose)
 
 	if err != nil {
 		errors.Fprint(os.Stderr, err)
