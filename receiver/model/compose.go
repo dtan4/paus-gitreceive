@@ -88,6 +88,10 @@ func (c *Compose) InjectBuildArgs(buildArgs map[string]string) {
 		return
 	}
 
+	if webService.Build.Args == nil {
+		webService.Build.Args = map[string]string{}
+	}
+
 	for k, v := range buildArgs {
 		webService.Build.Args[k] = v
 	}

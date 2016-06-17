@@ -55,57 +55,54 @@ func setup() {
 	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName)
 }
 
-// func TestInjectBuildArgs(t *testing.T) {
-// 	var (
-// 		buildArgs      map[string]string
-// 		buildArgString string
-// 	)
+func TestInjectBuildArgs(t *testing.T) {
+	var (
+		buildArgs map[string]string
+	)
 
-// 	setup()
+	setup()
 
-// 	buildArgs = map[string]string{
-// 		"FOO": "hoge",
-// 		"BAR": "fuga",
-// 		"BAZ": "piyo",
-// 	}
+	buildArgs = map[string]string{
+		"FOO": "hoge",
+		"BAR": "fuga",
+		"BAZ": "piyo",
+	}
 
-// 	// TODO: test for V1
+	// TODO: test for V1
 
-// 	v2Compose.InjectBuildArgs(buildArgs)
-// 	webService, _ := v2Compose.project.ServiceConfigs.Get("web")
+	v2Compose.InjectBuildArgs(buildArgs)
+	svc, _ := v2Compose.project.ServiceConfigs.Get("web")
 
-// 	for key, value := range buildArgs {
-// 		buildArgString = key + "=" + value
+	for key, _ := range buildArgs {
+		if _, ok := svc.Build.Args[key]; !ok {
+			t.Fatalf("Compose File V2 does not contain %s", key)
+		}
+	}
 
-// 		if !contains(webService.Build.Args, buildArgString) {
-// 			t.Fatalf("Compose File V2 does not contain %s", key)
-// 		}
-// 	}
+	buildArgs = map[string]string{
+		"FOO": "hogefugapiyo",
+	}
+	v2ComposeBuildArg.InjectBuildArgs(buildArgs)
+	svc, _ = v2ComposeBuildArg.project.ServiceConfigs.Get("web")
 
-// 	buildArgs = map[string]string{
-// 		"FOO": "hogefugapiyo",
-// 	}
-// 	v2ComposeBuildArg.InjectBuildArgs(buildArgs)
-// 	webService, _ = v2ComposeBuildArg.project.ServiceConfigs.Get("web")
+	oldBuildArg := "hoge"
+	newBuildArg := "hogefugapiyo"
 
-// 	oldBuildArgtring := "FOO=hoge"
-// 	newBuildArgString := "FOO=hogefugapiyo"
+	if svc.Build.Args["FOO"] == oldBuildArg {
+		t.Fatalf("Failed to update existing key FOO. FOO=%s still exists.", oldBuildArg)
+	}
 
-// 	if contains(webService.Build.Args, oldBuildArgtring) {
-// 		t.Fatalf("Failed to update existing key FOO. %s still exists.", oldBuildArgtring)
-// 	}
+	if svc.Build.Args["FOO"] != newBuildArg {
+		t.Fatalf("Failed to update existing key FOO. FOO=%s does not exist.", newBuildArg)
+	}
 
-// 	if !contains(webService.Build.Args, newBuildArgString) {
-// 		t.Fatalf("Failed to update existing key FOO. %s does not exist.", newBuildArgString)
-// 	}
+	v2ComposeNoBuildEnv.InjectBuildArgs(buildArgs)
+	svc, _ = v2ComposeNoBuildEnv.project.ServiceConfigs.Get("web")
 
-// 	v2ComposeNoBuildEnv.InjectBuildArgs(buildArgs)
-// 	webService, _ = v2ComposeNoBuildEnv.project.ServiceConfigs.Get("web")
-
-// 	if len(webService.Build.Args) == 0 {
-// 		t.Fatalf("Build section was created in Compose file without build section. Actual: %v", v2ComposeNoBuildEnv.Yaml)
-// 	}
-// }
+	if len(svc.Build.Args) == 0 {
+		t.Fatalf("Build section was created in Compose file without build section.")
+	}
+}
 
 func TestInjectEnvironmentVariables(t *testing.T) {
 	var (
