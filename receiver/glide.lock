@@ -1,12 +1,38 @@
-hash: 8440e5ed473e5f45f6be802ddc6367a90e492d463656fe316870da34dd441fa3
-updated: 2016-04-28T11:42:55.569979438+09:00
+hash: 8f176574d82595186c664cb35b17d186f702be07995ec955e01cf904742e2dc8
+updated: 2016-06-16T19:27:52.585983514+09:00
 imports:
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
   version: 0c40f4a7e3e00ce19b17742289cedab27247323e
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
+- name: github.com/docker/docker
+  version: e3ad63f7e44775335603ed23d34e1369eb2452b0
+  subpackages:
+  - pkg/urlutil
+- name: github.com/docker/engine-api
+  version: f50fbe5f9c4c8eeed591549d2c8187f4076f3717
+  subpackages:
+  - types/strslice
+- name: github.com/docker/go-connections
+  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+  subpackages:
+  - nat
+- name: github.com/docker/libcompose
+  version: 78932cac4f5c95fdbfbe5d8932f028a69334d9d2
+  subpackages:
+  - project
+  - config
+  - logger
+  - project/events
+  - project/options
+  - utils
+  - yaml
+- name: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
   version: 7e2450a717e8725de58dc1530218cd64117861b3
   subpackages:
@@ -31,14 +57,26 @@ imports:
   version: cea086319492c3940683ea5e122aa5de70a33923
 - name: github.com/pkg/errors
   version: cd6e0b425dfeaa184e93ed993aaee9dea03dc14d
+- name: github.com/Sirupsen/logrus
+  version: f3cfb454f4c209e6668c95216c4744b8fddb2356
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
   - codec
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: d5336c75940ef31c9ceeb0ae64cf92944bccb4ee
 - name: golang.org/x/net
   version: fb93926129b8ec0056f2f458b1f519654814edf0
   subpackages:
   - context
+- name: golang.org/x/sys
+  version: 62bee037599929a6e9146f29d10dd5208c43507d
+  subpackages:
+  - unix
 - name: gopkg.in/yaml.v2
   version: a83829b6f1293c91addabc89d0571c246397bbf4
 devImports: []

@@ -23,7 +23,11 @@ func appDirExists(application *model.Application, etcd *store.Etcd) bool {
 func deploy(dockerHost string, application *model.Application, composeFilePath string) (string, error) {
 	var err error
 
-	compose := model.NewCompose(dockerHost, composeFilePath, application.ProjectName)
+	compose, err := model.NewCompose(dockerHost, composeFilePath, application.ProjectName)
+
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to initialize Compose object")
+	}
 
 	fmt.Println("=====> Building ...")
 
