@@ -1,5 +1,5 @@
 hash: 8f176574d82595186c664cb35b17d186f702be07995ec955e01cf904742e2dc8
-updated: 2016-06-16T19:27:52.585983514+09:00
+updated: 2016-06-24T16:12:07.382759914+09:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -26,11 +26,11 @@ imports:
   subpackages:
   - project
   - config
+  - utils
+  - yaml
   - logger
   - project/events
   - project/options
-  - utils
-  - yaml
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
