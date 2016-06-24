@@ -35,7 +35,7 @@ func ApplicationFromArgs(args []string) *Application {
 }
 
 func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
-	var args map[string]string
+	var args = make(map[string]string)
 
 	userDirectoryKey := "/paus/users/" + app.Username
 
@@ -75,7 +75,7 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 }
 
 func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]string, error) {
-	var envs map[string]string
+	var envs = make(map[string]string)
 
 	userDirectoryKey := "/paus/users/" + app.Username
 
