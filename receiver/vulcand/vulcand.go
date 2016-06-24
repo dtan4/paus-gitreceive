@@ -21,7 +21,7 @@ var (
 
 func RegisterInformation(etcd *store.Etcd, application *model.Application, baseDomain string, webContainer *model.Container) ([]string, error) {
 	if err := setBackend(etcd, application, baseDomain); err != nil {
-		return nil, errors.Wrap(err, "Failed to set vulcand backend.")
+		return nil, err
 	}
 
 	identifiers := []string{
@@ -31,7 +31,7 @@ func RegisterInformation(etcd *store.Etcd, application *model.Application, baseD
 
 	for _, identifier := range identifiers {
 		if err := setFrontend(etcd, application, identifier, baseDomain); err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to set vulcand frontend. identifier: %s", identifier))
+			return nil, err
 		}
 	}
 
@@ -47,7 +47,7 @@ func setBackend(etcd *store.Etcd, application *model.Application, baseDomain str
 	key := fmt.Sprintf("%s/backends/%s/backend", VulcandKeyBase, application.ProjectName)
 
 	if err := etcd.Set(key, httpBackendJSON); err != nil {
-		return errors.Wrap(err, "Failed to set vulcand backend in etcd.")
+		return err
 	}
 
 	return nil
@@ -76,7 +76,7 @@ func setFrontend(etcd *store.Etcd, application *model.Application, identifier, b
 	json := string(b)
 
 	if err := etcd.Set(key, json); err != nil {
-		return errors.Wrap(err, "Failed to set vulcand frontend in etcd.")
+		return err
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func setServer(etcd *store.Etcd, application *model.Application, container *mode
 	json := string(b)
 
 	if err := etcd.Set(key, json); err != nil {
-		return errors.Wrap(err, "Failed to set vulcand server in etcd.")
+		return err
 	}
 
 	return nil
