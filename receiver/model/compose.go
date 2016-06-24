@@ -63,7 +63,7 @@ func (c *Compose) Build() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to build Docker Compose project. projectName: %s", c.ProjectName))
+		return err
 	}
 
 	return nil
@@ -75,7 +75,7 @@ func (c *Compose) GetContainerID(service string) (string, error) {
 	out, err := cmd.Output()
 
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to get container ID. projectName: %s, service: %s", c.ProjectName, service))
+		return "", errors.Wrapf(err, "Failed to get container ID. projectName: %s, service: %s", c.ProjectName, service)
 	}
 
 	return strings.Replace(string(out), "\n", "", -1), nil
@@ -114,7 +114,7 @@ func (c *Compose) Pull() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to pull images in Docker Compose project. projectName: %s", c.ProjectName))
+		return err
 	}
 
 	return nil
@@ -169,7 +169,7 @@ func (c *Compose) SaveAs(filePath string) error {
 	}
 
 	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to save as YAML file. path: %s", filePath))
+		return errors.Wrapf(err, "Failed to save as YAML file. path: %s", filePath)
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func (c *Compose) Up() error {
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to start Docker Compose project. projectName: %s", c.ProjectName))
+		return err
 	}
 
 	return nil
