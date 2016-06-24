@@ -1,5 +1,5 @@
-hash: 8f176574d82595186c664cb35b17d186f702be07995ec955e01cf904742e2dc8
-updated: 2016-06-16T19:27:52.585983514+09:00
+hash: 1acf7b2ab6254d402339a5f9af57f2b89a9aace20bb36f300cd7c85b865e2ab1
+updated: 2016-06-24T16:28:18.052995101+09:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -26,11 +26,11 @@ imports:
   subpackages:
   - project
   - config
+  - utils
+  - yaml
   - logger
   - project/events
   - project/options
-  - utils
-  - yaml
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
@@ -56,7 +56,7 @@ imports:
 - name: github.com/kelseyhightower/envconfig
   version: cea086319492c3940683ea5e122aa5de70a33923
 - name: github.com/pkg/errors
-  version: cd6e0b425dfeaa184e93ed993aaee9dea03dc14d
+  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
 - name: github.com/Sirupsen/logrus
   version: f3cfb454f4c209e6668c95216c4744b8fddb2356
 - name: github.com/ugorji/go

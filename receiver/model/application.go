@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +17,11 @@ type Application struct {
 	ProjectName string
 }
 
-func ApplicationFromArgs(args []string) *Application {
+func ApplicationFromArgs(args []string) (*Application, error) {
+	if len(args) != 3 {
+		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
+	}
+
 	repository := strings.Replace(args[0], "/", "-", -1)
 	revision := args[1]
 	username := args[2]
@@ -31,7 +34,7 @@ func ApplicationFromArgs(args []string) *Application {
 		username,
 		appName,
 		projectName,
-	}
+	}, nil
 }
 
 func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
@@ -58,14 +61,14 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 	buildArgKeys, err := etcd.List(buildArgsKey, false)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get build arg keys.")
+		return nil, err
 	}
 
 	for _, key := range buildArgKeys {
 		value, err := etcd.Get(key)
 
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to get build arg value. key: %s", key))
+			return nil, err
 		}
 
 		args[strings.Replace(key, buildArgsKey, "", 1)] = value
@@ -98,14 +101,14 @@ func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]strin
 	envKeys, err := etcd.List(envDirectoryKey, false)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get environment variable keys.")
+		return nil, err
 	}
 
 	for _, key := range envKeys {
 		value, err := etcd.Get(key)
 
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to get environment variable value. key: %s", key))
+			return nil, err
 		}
 
 		envs[strings.Replace(key, envDirectoryKey, "", 1)] = value
@@ -130,7 +133,7 @@ func (app *Application) RegisterMetadata(etcd *store.Etcd) error {
 	}
 
 	if err := etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
-		return errors.Wrap(err, "Failed to set revisdion.")
+		return err
 	}
 
 	return nil

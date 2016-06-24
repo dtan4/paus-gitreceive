@@ -29,14 +29,14 @@ func GetSubmodules(repositoryPath string) error {
 
 	if err == nil && stat.IsDir() {
 		if e := os.RemoveAll(dir); e != nil {
-			return errors.Wrap(e, fmt.Sprintf("Failed to remove %s.", dir))
+			return errors.Wrapf(e, "Failed to remove %s.", dir)
 		}
 	}
 
 	cmd := exec.Command("/usr/local/bin/get-submodules")
 
 	if err = RunCommand(cmd); err != nil {
-		return errors.Wrap(err, "Failed to get submodules.")
+		return err
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
 
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to open %s.", repositoryPath))
+		return errors.Wrapf(err, "Failed to open %s.", repositoryPath)
 	}
 
 	for _, file := range files {
@@ -54,7 +54,7 @@ func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 			path := filepath.Join(repositoryPath, file.Name())
 
 			if err = os.RemoveAll(path); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("Failed to remove files in %s.", path))
+				return errors.Wrapf(err, "Failed to remove files in %s.", path)
 			}
 		}
 	}
@@ -66,13 +66,13 @@ func RunCommand(cmd *exec.Cmd) error {
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("creating stdout failed. command: %v", cmd.Args))
+		return errors.Wrapf(err, "creating stdout failed. command: %v", cmd.Args)
 	}
 
 	stderr, err := cmd.StderrPipe()
 
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("creating stderr failed. command: %v", cmd.Args))
+		return errors.Wrapf(err, "creating stderr failed. command: %v", cmd.Args)
 	}
 
 	cmd.Start()
@@ -81,7 +81,7 @@ func RunCommand(cmd *exec.Cmd) error {
 	go printLine(stderr)
 
 	if err = cmd.Wait(); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("command execution failed. command: %v", cmd.Args))
+		return errors.Wrapf(err, "command execution failed. command: %v", cmd.Args)
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func UnpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 	repositoryPath := filepath.Join(repositoryDir, username, projectName)
 
 	if err := os.MkdirAll(repositoryPath, 0777); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s.", repositoryPath))
+		return "", errors.Wrapf(err, "Failed to create directory %s.", repositoryPath)
 	}
 
 	reader := tar.NewReader(stdin)
@@ -114,17 +114,17 @@ func UnpackReceivedFiles(repositoryDir, username, projectName string, stdin io.R
 		case tar.TypeDir:
 			if _, err = os.Stat(outPath); err != nil {
 				if err = os.MkdirAll(outPath, 0755); err != nil {
-					return "", errors.Wrap(err, fmt.Sprintf("Failed to create directory %s from tarball.", outPath))
+					return "", errors.Wrapf(err, "Failed to create directory %s from tarball.", outPath)
 				}
 			}
 
 		case tar.TypeReg, tar.TypeRegA:
 			if _, err = io.Copy(buffer, reader); err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("Failed to copy file contents in %s from tarball.", outPath))
+				return "", errors.Wrapf(err, "Failed to copy file contents in %s from tarball.", outPath)
 			}
 
 			if err = ioutil.WriteFile(outPath, buffer.Bytes(), os.FileMode(header.Mode)); err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("Failed to create file %s from tarball.", outPath))
+				return "", errors.Wrapf(err, "Failed to create file %s from tarball.", outPath)
 			}
 		}
 	}

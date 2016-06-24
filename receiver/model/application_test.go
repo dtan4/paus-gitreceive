@@ -5,7 +5,17 @@ import (
 )
 
 func TestApplicationFromArgs(t *testing.T) {
-	args := []string{
+	var args []string
+
+	args = []string{}
+
+	_, err := ApplicationFromArgs(args)
+
+	if err == nil {
+		t.Fatalf("Error should be raised")
+	}
+
+	args = []string{
 		"dtan4/rails-sample",
 		"3e634e41d5a819a7586c621a6322ee4d5085232c",
 		"dtan4",
@@ -17,7 +27,11 @@ func TestApplicationFromArgs(t *testing.T) {
 	expectedAppName := "rails-sample"
 	expectedProjectName := "dtan4-rails-sample-3e634e41"
 
-	application := ApplicationFromArgs(args)
+	application, err := ApplicationFromArgs(args)
+
+	if err != nil {
+		t.Fatalf("Unexpected error has been raised. error: %s", err)
+	}
 
 	if expectedRepository != application.Repository {
 		t.Fatalf("Repository is not matched. Expected: %s, Actual: %s", expectedRepository, application.Repository)

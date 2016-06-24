@@ -1,8 +1,6 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/coreos/etcd/client"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
@@ -33,7 +31,7 @@ func (c *Etcd) Get(key string) (string, error) {
 	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{})
 
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to get etcd value. key: %s", key))
+		return "", errors.Wrapf(err, "Failed to get etcd value. key: %s", key)
 	}
 
 	return resp.Node.Value, nil
@@ -51,7 +49,7 @@ func (c *Etcd) List(key string, recursive bool) ([]string, error) {
 	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{Recursive: recursive})
 
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Failed to list up etcd keys. key: %s, recursive: %v", key, recursive))
+		return nil, errors.Wrapf(err, "Failed to list up etcd keys. key: %s, recursive: %v", key, recursive)
 	}
 
 	for _, node := range resp.Node.Nodes {
@@ -65,7 +63,7 @@ func (c *Etcd) Mkdir(key string) error {
 	_, err := c.keysAPI.Set(context.Background(), key, "", &client.SetOptions{Dir: true})
 
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to create etcd directory. key: %s", key))
+		return errors.Wrapf(err, "Failed to create etcd directory. key: %s", key)
 	}
 
 	return nil
@@ -75,7 +73,7 @@ func (c *Etcd) Set(key, value string) error {
 	_, err := c.keysAPI.Set(context.Background(), key, value, &client.SetOptions{})
 
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to set etcd value. key: %s, value: %s", key, value))
+		return errors.Wrapf(err, "Failed to set etcd value. key: %s, value: %s", key, value)
 	}
 
 	return nil
