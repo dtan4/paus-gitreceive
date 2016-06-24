@@ -126,7 +126,7 @@ func main() {
 	config, etcd, err := initialize()
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
@@ -140,26 +140,26 @@ func main() {
 	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	if err = os.Chdir(repositoryPath); err != nil {
-		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to chdir to %s.", repositoryPath)))
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> Getting submodules ...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
-		errors.Fprint(os.Stderr, errors.Wrap(err, fmt.Sprintf("Failed to get submodules. path: %s", repositoryPath)))
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
 
 	if _, err := os.Stat(composeFilePath); err != nil {
-		errors.Fprint(os.Stderr, errors.Wrap(err, "docker-compose.yml was not found! path: "+composeFilePath))
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
@@ -168,21 +168,21 @@ func main() {
 	compose, err := model.NewCompose(config.DockerHost, composeFilePath, application.ProjectName)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	newComposeFilePath, err := prepareComposeFile(application, compose, etcd)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	webContainerID, err := deploy(application, compose)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
@@ -191,28 +191,28 @@ func main() {
 	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("=====> Registering metadata ...")
 
 	if err = application.RegisterMetadata(etcd); err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	identifiers, err := vulcand.RegisterInformation(etcd, application, config.BaseDomain, webContainer)
 
 	if err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
 	if err = util.RemoveUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
-		errors.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 }
