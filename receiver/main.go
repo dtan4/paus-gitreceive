@@ -13,7 +13,6 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
-	"github.com/pkg/errors"
 )
 
 func appDirExists(application *model.Application, etcd *store.Etcd) bool {
@@ -26,25 +25,25 @@ func deploy(application *model.Application, compose *model.Compose) (string, err
 	fmt.Println("=====> Building ...")
 
 	if err = compose.Build(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to build application image. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
+		return "", err
 	}
 
 	fmt.Println("=====> Pulling ...")
 
 	if err = compose.Pull(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to pull application image. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
+		return "", err
 	}
 
 	fmt.Println("=====> Deploying ...")
 
 	if err = compose.Up(); err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to start application. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
+		return "", err
 	}
 
 	webContainerID, err := compose.GetContainerID("web")
 
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to web container ID. project: %s, composeFilePath: %s", compose.ProjectName, compose.ComposeFilePath))
+		return "", err
 	}
 
 	return webContainerID, nil
@@ -54,13 +53,13 @@ func initialize() (*config.Config, *store.Etcd, error) {
 	config, err := config.LoadConfig()
 
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to load config.")
+		return nil, nil, err
 	}
 
 	etcd, err := store.NewEtcd(config.EtcdEndpoint)
 
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to initialize etcd store.")
+		return nil, nil, err
 	}
 
 	return config, etcd, nil
@@ -70,7 +69,7 @@ func injectBuildArgs(application *model.Application, compose *model.Compose, etc
 	args, err := application.BuildArgs(etcd)
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get environment build args.")
+		return err
 	}
 
 	compose.InjectBuildArgs(args)
@@ -82,7 +81,7 @@ func injectEnvironmentVariables(application *model.Application, compose *model.C
 	envs, err := application.EnvironmentVariables(etcd)
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to get environment variables.")
+		return err
 	}
 
 	compose.InjectEnvironmentVariables(envs)
@@ -92,18 +91,18 @@ func injectEnvironmentVariables(application *model.Application, compose *model.C
 
 func prepareComposeFile(application *model.Application, compose *model.Compose, etcd *store.Etcd) (string, error) {
 	if err := injectBuildArgs(application, compose, etcd); err != nil {
-		return "", errors.Wrap(err, "Failed to inject build args.")
+		return "", err
 	}
 
 	if err := injectEnvironmentVariables(application, compose, etcd); err != nil {
-		return "", errors.Wrap(err, "Failed to inject environment variables.")
+		return "", err
 	}
 
 	compose.RewritePortBindings()
 	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
 	if err := compose.SaveAs(newComposeFilePath); err != nil {
-		return "", errors.Wrap(err, "Failed to save docker-compose.yml. path: "+newComposeFilePath)
+		return "", err
 	}
 
 	return newComposeFilePath, nil
