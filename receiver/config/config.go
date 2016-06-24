@@ -2,7 +2,6 @@ package config
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -40,7 +39,7 @@ func loadConfigFromFile(filePath string) (map[string]string, error) {
 	fp, err := os.Open(filePath)
 
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Failed to open %s.", filePath))
+		return nil, errors.Wrapf(err, "Failed to open %s.", filePath)
 	}
 
 	defer fp.Close()
@@ -78,7 +77,7 @@ func LoadConfig() (*Config, error) {
 	configFromFile, err := loadConfigFromFile(ConfigFilePath)
 
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Failed to load config from file. path: %s", ConfigFilePath))
+		return nil, err
 	}
 
 	for _, configName := range ConfigNames {
