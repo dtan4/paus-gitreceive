@@ -18,7 +18,11 @@ type Application struct {
 	ProjectName string
 }
 
-func ApplicationFromArgs(args []string) *Application {
+func ApplicationFromArgs(args []string) (*Application, error) {
+	if len(args) != 3 {
+		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
+	}
+
 	repository := strings.Replace(args[0], "/", "-", -1)
 	revision := args[1]
 	username := args[2]
@@ -31,7 +35,7 @@ func ApplicationFromArgs(args []string) *Application {
 		username,
 		appName,
 		projectName,
-	}
+	}, nil
 }
 
 func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {

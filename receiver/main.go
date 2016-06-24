@@ -130,7 +130,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	application := model.ApplicationFromArgs(os.Args[1:])
+	application, err := model.ApplicationFromArgs(os.Args[1:])
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
 
 	if !appDirExists(application, etcd) {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
