@@ -2,14 +2,17 @@ package model
 
 import (
 	"testing"
+
+	"github.com/dtan4/paus-gitreceive/receiver/store"
 )
 
 func TestApplicationFromArgs(t *testing.T) {
 	var args []string
 
 	args = []string{}
+	etcd, _ := store.NewEtcd("http://example.com:2379")
 
-	_, err := ApplicationFromArgs(args)
+	_, err := ApplicationFromArgs(args, etcd)
 
 	if err == nil {
 		t.Fatalf("Error should be raised")
@@ -27,7 +30,7 @@ func TestApplicationFromArgs(t *testing.T) {
 	expectedAppName := "rails-sample"
 	expectedProjectName := "dtan4-rails-sample-3e634e41"
 
-	application, err := ApplicationFromArgs(args)
+	application, err := ApplicationFromArgs(args, etcd)
 
 	if err != nil {
 		t.Fatalf("Unexpected error has been raised. error: %s", err)
