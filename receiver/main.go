@@ -29,7 +29,12 @@ func initialize() (*config.Config, *store.Etcd, error) {
 }
 
 func main() {
-	// printVersion()
+	if len(os.Args) > 1 {
+		if os.Args[1] == "-v" || os.Args[1] == "--version" {
+			printVersion()
+			os.Exit(0)
+		}
+	}
 
 	config, etcd, err := initialize()
 
