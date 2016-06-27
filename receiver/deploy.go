@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
@@ -65,7 +63,7 @@ func injectEnvironmentVariables(application *model.Application, compose *model.C
 	return nil
 }
 
-func prepareComposeFile(application *model.Application, compose *model.Compose) (string, error) {
+func prepareComposeFile(application *model.Application, compose *model.Compose, timestamp string) (string, error) {
 	if err := injectBuildArgs(application, compose); err != nil {
 		return "", err
 	}
@@ -75,7 +73,7 @@ func prepareComposeFile(application *model.Application, compose *model.Compose) 
 	}
 
 	compose.RewritePortBindings()
-	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
+	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+timestamp+".yml")
 
 	if err := compose.SaveAs(newComposeFilePath); err != nil {
 		return "", err

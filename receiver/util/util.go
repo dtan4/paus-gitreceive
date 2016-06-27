@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -85,6 +87,10 @@ func RunCommand(cmd *exec.Cmd) error {
 	}
 
 	return nil
+}
+
+func Timestamp() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 func UnpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {

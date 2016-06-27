@@ -85,7 +85,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	newComposeFilePath, err := prepareComposeFile(application, compose)
+	timestamp := util.Timestamp()
+
+	newComposeFilePath, err := prepareComposeFile(application, compose, timestamp)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -110,7 +112,7 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = application.RegisterMetadata(); err != nil {
+	if err = application.RegisterMetadata(timestamp); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

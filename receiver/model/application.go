@@ -1,9 +1,7 @@
 package model
 
 import (
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
@@ -123,7 +121,7 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	return envs, nil
 }
 
-func (app *Application) RegisterMetadata() error {
+func (app *Application) RegisterMetadata(timestamp string) error {
 	userDirectoryKey := "/paus/users/" + app.Username
 
 	if !app.etcd.HasKey(userDirectoryKey) {
@@ -138,7 +136,7 @@ func (app *Application) RegisterMetadata() error {
 		_ = app.etcd.Mkdir(appDirectoryKey + "/revisions")
 	}
 
-	if err := app.etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := app.etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, timestamp); err != nil {
 		return err
 	}
 
