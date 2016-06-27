@@ -18,7 +18,7 @@ type Application struct {
 }
 
 func ApplicationFromArgs(args []string) (*Application, error) {
-	if len(args) != 3 {
+	if len(args) < 3 {
 		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
 	}
 
@@ -77,7 +77,8 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 	return args, nil
 }
 
-func (app *Application) DirExists(etcd *store.Etcd) bool {
+func (app *Application) DirExists(
+	etcd *store.Etcd) bool {
 	return etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
 }
 
