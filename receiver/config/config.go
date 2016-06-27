@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
@@ -83,7 +84,17 @@ func LoadConfig() (*Config, error) {
 	}
 
 	for _, configName := range configNames {
-		reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
+		if configName == "MaxAppDeploy" {
+			n, err := strconv.ParseInt(configFromFile[configName], 10, 64)
+
+			if err != nil {
+				return nil, errors.Wrapf(err, "Failed to parse %s as integer. value: %s", configName, configFromFile[configName])
+			}
+
+			reflect.ValueOf(&config).Elem().FieldByName(configName).SetInt(n)
+		} else {
+			reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
+		}
 	}
 
 	return &config, nil

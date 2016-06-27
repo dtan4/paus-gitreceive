@@ -13,7 +13,8 @@ type Application struct {
 	Username    string
 	AppName     string
 	ProjectName string
-	etcd        *store.Etcd
+
+	etcd *store.Etcd
 }
 
 func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) {
@@ -141,4 +142,15 @@ func (app *Application) RegisterMetadata(timestamp string) error {
 	}
 
 	return nil
+}
+
+func (app *Application) Revisions() ([]string, error) {
+	revisionsKey := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/revisions"
+	keys, err := app.etcd.List(revisionsKey, false)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return keys, err
 }

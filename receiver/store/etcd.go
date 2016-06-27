@@ -46,7 +46,10 @@ func (c *Etcd) HasKey(key string) bool {
 func (c *Etcd) List(key string, recursive bool) ([]string, error) {
 	result := []string{}
 
-	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{Recursive: recursive})
+	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{
+		Recursive: recursive,
+		Sort:      true,
+	})
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list up etcd keys. key: %s, recursive: %v", key, recursive)

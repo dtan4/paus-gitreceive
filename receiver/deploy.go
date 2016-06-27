@@ -9,8 +9,18 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 )
 
-func deploy(application *model.Application, compose *model.Compose) (string, error) {
+func deploy(application *model.Application, compose *model.Compose, maxAppDeploy int64) (string, error) {
 	var err error
+
+	revisions, err := application.Revisions()
+
+	if err != nil {
+		return "", err
+	}
+
+	if int64(len(revisions)) >= maxAppDeploy {
+		fmt.Println("Rate Limit Exceeded!!!!!!!!!!!!")
+	}
 
 	fmt.Println("=====> Building ...")
 

@@ -99,7 +99,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose)
+	webContainerID, err := deploy(application, compose, config.MaxAppDeploy)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
