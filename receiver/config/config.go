@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	ConfigPrefix   = "paus"
-	ConfigFilePath = "/paus/config"
+	configPrefix   = "paus"
+	configFilePath = "/paus/config"
 )
 
 var (
-	ConfigNames = []string{
+	configNames = []string{
 		"BaseDomain",
 		"DockerHost",
 		"EtcdEndpoint",
@@ -66,23 +66,23 @@ func loadConfigFromFile(filePath string) (map[string]string, error) {
 func LoadConfig() (*Config, error) {
 	var config Config
 
-	err := envconfig.Process(ConfigPrefix, &config)
+	err := envconfig.Process(configPrefix, &config)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to load config from envs.")
 	}
 
-	if _, err := os.Stat(ConfigFilePath); err != nil {
+	if _, err := os.Stat(configFilePath); err != nil {
 		return &config, nil
 	}
 
-	configFromFile, err := loadConfigFromFile(ConfigFilePath)
+	configFromFile, err := loadConfigFromFile(configFilePath)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, configName := range ConfigNames {
+	for _, configName := range configNames {
 		reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
 	}
 
