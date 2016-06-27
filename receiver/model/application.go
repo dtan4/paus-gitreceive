@@ -15,9 +15,10 @@ type Application struct {
 	Username    string
 	AppName     string
 	ProjectName string
+	etcd        *store.Etcd
 }
 
-func ApplicationFromArgs(args []string) (*Application, error) {
+func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) {
 	if len(args) < 3 {
 		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
 	}
@@ -29,43 +30,44 @@ func ApplicationFromArgs(args []string) (*Application, error) {
 	projectName := repository + "-" + revision[0:8]
 
 	return &Application{
-		repository,
-		revision,
-		username,
-		appName,
-		projectName,
+		Repository:  repository,
+		Revision:    revision,
+		Username:    username,
+		AppName:     appName,
+		ProjectName: projectName,
+		etcd:        etcd,
 	}, nil
 }
 
-func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
+func (app *Application) BuildArgs() (map[string]string, error) {
 	var args = make(map[string]string)
 
 	userDirectoryKey := "/paus/users/" + app.Username
 
-	if !etcd.HasKey(userDirectoryKey) {
+	if !app.etcd.HasKey(userDirectoryKey) {
 		return map[string]string{}, nil
 	}
 
 	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
 
-	if !etcd.HasKey(appDirectoryKey) {
+	if !app.etcd.HasKey(appDirectoryKey) {
 		return map[string]string{}, nil
 	}
 
 	buildArgsKey := appDirectoryKey + "/build-args/"
 
-	if !etcd.HasKey(buildArgsKey) {
+	if !app.etcd.HasKey(buildArgsKey) {
 		return map[string]string{}, nil
 	}
 
-	buildArgKeys, err := etcd.List(buildArgsKey, false)
+	buildArgKeys, err := app.etcd.List(buildArgsKey, false)
 
 	if err != nil {
 		return nil, err
 	}
 
 	for _, key := range buildArgKeys {
-		value, err := etcd.Get(key)
+		value, err := app.etcd.Get(key)
 
 		if err != nil {
 			return nil, err
@@ -77,40 +79,39 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 	return args, nil
 }
 
-func (app *Application) DirExists(
-	etcd *store.Etcd) bool {
-	return etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
+func (app *Application) DirExists() bool {
+	return app.etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
 }
 
-func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]string, error) {
+func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	var envs = make(map[string]string)
 
 	userDirectoryKey := "/paus/users/" + app.Username
 
-	if !etcd.HasKey(userDirectoryKey) {
+	if !app.etcd.HasKey(userDirectoryKey) {
 		return map[string]string{}, nil
 	}
 
 	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
 
-	if !etcd.HasKey(appDirectoryKey) {
+	if !app.etcd.HasKey(appDirectoryKey) {
 		return map[string]string{}, nil
 	}
 
 	envDirectoryKey := appDirectoryKey + "/envs/"
 
-	if !etcd.HasKey(envDirectoryKey) {
+	if !app.etcd.HasKey(envDirectoryKey) {
 		return map[string]string{}, nil
 	}
 
-	envKeys, err := etcd.List(envDirectoryKey, false)
+	envKeys, err := app.etcd.List(envDirectoryKey, false)
 
 	if err != nil {
 		return nil, err
 	}
 
 	for _, key := range envKeys {
-		value, err := etcd.Get(key)
+		value, err := app.etcd.Get(key)
 
 		if err != nil {
 			return nil, err
@@ -122,22 +123,22 @@ func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]strin
 	return envs, nil
 }
 
-func (app *Application) RegisterMetadata(etcd *store.Etcd) error {
+func (app *Application) RegisterMetadata() error {
 	userDirectoryKey := "/paus/users/" + app.Username
 
-	if !etcd.HasKey(userDirectoryKey) {
-		_ = etcd.Mkdir(userDirectoryKey)
+	if !app.etcd.HasKey(userDirectoryKey) {
+		_ = app.etcd.Mkdir(userDirectoryKey)
 	}
 
 	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
 
-	if !etcd.HasKey(appDirectoryKey) {
-		_ = etcd.Mkdir(appDirectoryKey)
-		_ = etcd.Mkdir(appDirectoryKey + "/envs")
-		_ = etcd.Mkdir(appDirectoryKey + "/revisions")
+	if !app.etcd.HasKey(appDirectoryKey) {
+		_ = app.etcd.Mkdir(appDirectoryKey)
+		_ = app.etcd.Mkdir(appDirectoryKey + "/envs")
+		_ = app.etcd.Mkdir(appDirectoryKey + "/revisions")
 	}
 
-	if err := etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := app.etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
 		return err
 	}
 

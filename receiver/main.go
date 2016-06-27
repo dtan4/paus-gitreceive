@@ -38,14 +38,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	application, err := model.ApplicationFromArgs(os.Args[1:])
+	application, err := model.ApplicationFromArgs(os.Args[1:], etcd)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
-	if !application.DirExists(etcd) {
+	if !application.DirExists() {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
 		os.Exit(1)
 	}
@@ -85,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	newComposeFilePath, err := prepareComposeFile(application, compose, etcd)
+	newComposeFilePath, err := prepareComposeFile(application, compose)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -110,7 +110,7 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = application.RegisterMetadata(etcd); err != nil {
+	if err = application.RegisterMetadata(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
