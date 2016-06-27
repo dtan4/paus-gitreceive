@@ -77,6 +77,10 @@ func (app *Application) BuildArgs(etcd *store.Etcd) (map[string]string, error) {
 	return args, nil
 }
 
+func (app *Application) DirExists(etcd *store.Etcd) bool {
+	return etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
+}
+
 func (app *Application) EnvironmentVariables(etcd *store.Etcd) (map[string]string, error) {
 	var envs = make(map[string]string)
 

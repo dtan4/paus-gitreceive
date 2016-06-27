@@ -15,10 +15,6 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
-func appDirExists(application *model.Application, etcd *store.Etcd) bool {
-	return etcd.HasKey("/paus/users/" + application.Username + "/apps/" + application.AppName)
-}
-
 func deploy(application *model.Application, compose *model.Compose) (string, error) {
 	var err error
 
@@ -136,7 +132,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !appDirExists(application, etcd) {
+	if !application.DirExists(etcd) {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
 		os.Exit(1)
 	}
