@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
@@ -66,23 +65,22 @@ func injectEnvironmentVariables(application *model.Application, compose *model.C
 	return nil
 }
 
-func prepareComposeFile(application *model.Application, compose *model.Compose, timestamp string) (string, error) {
+func prepareComposeFile(application *model.Application, deployment *model.Deployment, compose *model.Compose) error {
 	if err := injectBuildArgs(application, compose); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := injectEnvironmentVariables(application, compose); err != nil {
-		return "", err
+		return err
 	}
 
 	compose.RewritePortBindings()
-	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+timestamp+".yml")
 
-	if err := compose.SaveAs(newComposeFilePath); err != nil {
-		return "", err
+	if err := compose.SaveAs(deployment.ComposeFilePath); err != nil {
+		return err
 	}
 
-	return newComposeFilePath, nil
+	return nil
 }
 
 func printDeployedURLs(repository string, config *config.Config, identifiers []string) {

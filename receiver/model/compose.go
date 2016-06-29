@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -39,10 +38,6 @@ type ComposeConfig struct {
 	Services map[string]*config.ServiceConfig `yaml:"services,omitempty"`
 	Volumes  map[string]*config.VolumeConfig  `yaml:"volumes,omitempty"`
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
-}
-
-func ComposeFilePath(dir string, timestamp string) string {
-	return filepath.Join(dir, "docker-compose-"+timestamp+".yml")
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {

@@ -98,9 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	newComposeFilePath, err := prepareComposeFile(application, compose, timestamp)
-
-	if err != nil {
+	if err := prepareComposeFile(application, deployment, compose); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
@@ -137,7 +135,7 @@ func main() {
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
-	if err = util.RemoveUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
+	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
