@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"time"
 
@@ -87,6 +88,18 @@ func RunCommand(cmd *exec.Cmd) error {
 	}
 
 	return nil
+}
+
+func SortKeys(kv map[string]string) []string {
+	var keys []string
+
+	for k, _ := range kv {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	return keys
 }
 
 func Timestamp() string {

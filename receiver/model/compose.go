@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -38,6 +39,10 @@ type ComposeConfig struct {
 	Services map[string]*config.ServiceConfig `yaml:"services,omitempty"`
 	Volumes  map[string]*config.VolumeConfig  `yaml:"volumes,omitempty"`
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
+}
+
+func ComposeFilePath(dir string, timestamp string) string {
+	return filepath.Join(dir, "docker-compose-"+timestamp+".yml")
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
@@ -170,6 +175,17 @@ func (c *Compose) SaveAs(filePath string) error {
 
 	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
 		return errors.Wrapf(err, "Failed to save as YAML file. path: %s", filePath)
+	}
+
+	return nil
+}
+
+func (c *Compose) Stop() error {
+	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "stop")
+	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
+
+	if err := util.RunCommand(cmd); err != nil {
+		return err
 	}
 
 	return nil

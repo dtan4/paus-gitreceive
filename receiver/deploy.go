@@ -7,20 +7,11 @@ import (
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/util"
 )
 
-func deploy(application *model.Application, compose *model.Compose, maxAppDeploy int64) (string, error) {
+func deploy(application *model.Application, compose *model.Compose) (string, error) {
 	var err error
-
-	revisions, err := application.Revisions()
-
-	if err != nil {
-		return "", err
-	}
-
-	if int64(len(revisions)) >= maxAppDeploy {
-		fmt.Println("Rate Limit Exceeded!!!!!!!!!!!!")
-	}
 
 	fmt.Println("=====> Building ...")
 
@@ -101,4 +92,34 @@ func printDeployedURLs(repository string, config *config.Config, identifiers []s
 		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
 		fmt.Println("         " + url)
 	}
+}
+
+func rotateDeployments(application *model.Application, maxAppDeploy int64, dockerHost string, repositoryPath string) error {
+	deployments, err := application.Deployments()
+
+	if err != nil {
+		return err
+	}
+
+	if len(deployments) == 0 || int64(len(deployments)) < maxAppDeploy {
+		return nil
+	}
+
+	oldestDeployment := util.SortKeys(deployments)[0]
+	composeFilePath := model.ComposeFilePath(repositoryPath, oldestDeployment)
+	compose, err := model.NewCompose(dockerHost, composeFilePath, application.Repository+"-"+deployments[oldestDeployment][0:8])
+
+	if err != nil {
+		return err
+	}
+
+	if err := compose.Stop(); err != nil {
+		return err
+	}
+
+	if err := application.DeleteDeployment(oldestDeployment); err != nil {
+		return err
+	}
+
+	return nil
 }

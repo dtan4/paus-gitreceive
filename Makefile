@@ -23,8 +23,8 @@ compose-up: compose-stop
 	@docker-compose run --rm gitreceive-upload-key $(PAUS_USER) "$(shell cat $(SSH_PUBLIC_KEY))"
 	etcdctl --endpoint "http://$(DOCKER_HOST):2379" mkdir /paus/users/$(PAUS_USER)/apps/$(PAUS_APPNAME) || true
 	etcdctl --endpoint "http://$(DOCKER_HOST):2379" mkdir /paus/users/$(PAUS_USER)/apps/$(PAUS_APPNAME)/build-args || true
+	etcdctl --endpoint "http://$(DOCKER_HOST):2379" mkdir /paus/users/$(PAUS_USER)/apps/$(PAUS_APPNAME)/deployments || true
 	etcdctl --endpoint "http://$(DOCKER_HOST):2379" mkdir /paus/users/$(PAUS_USER)/apps/$(PAUS_APPNAME)/envs || true
-	etcdctl --endpoint "http://$(DOCKER_HOST):2379" mkdir /paus/users/$(PAUS_USER)/apps/$(PAUS_APPNAME)/revisions || true
 
 .PHONY: compose-stop
 compose-stop:

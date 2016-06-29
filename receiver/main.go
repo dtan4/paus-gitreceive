@@ -83,6 +83,11 @@ func main() {
 
 	fmt.Println("=====> docker-compose.yml was found")
 
+	if err := rotateDeployments(application, config.MaxAppDeploy, config.DockerHost, repositoryPath); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
+
 	compose, err := model.NewCompose(config.DockerHost, composeFilePath, application.ProjectName)
 
 	if err != nil {
@@ -99,7 +104,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose, config.MaxAppDeploy)
+	webContainerID, err := deploy(application, compose)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

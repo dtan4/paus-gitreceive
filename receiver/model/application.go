@@ -78,6 +78,39 @@ func (app *Application) BuildArgs() (map[string]string, error) {
 	return args, nil
 }
 
+func (app *Application) DeleteDeployment(deployment string) error {
+	key := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/deployments/" + deployment
+
+	if err := app.etcd.Delete(key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (app *Application) Deployments() (map[string]string, error) {
+	var deployments = make(map[string]string)
+
+	deploymentsKey := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/deployments/"
+	keys, err := app.etcd.List(deploymentsKey, false)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys {
+		value, err := app.etcd.Get(key)
+
+		if err != nil {
+			return nil, err
+		}
+
+		deployments[strings.Replace(key, deploymentsKey, "", 1)] = value
+	}
+
+	return deployments, nil
+}
+
 func (app *Application) DirExists() bool {
 	return app.etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
 }
@@ -133,24 +166,13 @@ func (app *Application) RegisterMetadata(timestamp string) error {
 
 	if !app.etcd.HasKey(appDirectoryKey) {
 		_ = app.etcd.Mkdir(appDirectoryKey)
+		_ = app.etcd.Mkdir(appDirectoryKey + "/deployments")
 		_ = app.etcd.Mkdir(appDirectoryKey + "/envs")
-		_ = app.etcd.Mkdir(appDirectoryKey + "/revisions")
 	}
 
-	if err := app.etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, timestamp); err != nil {
+	if err := app.etcd.Set(appDirectoryKey+"/deployments/"+timestamp, app.Revision); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (app *Application) Revisions() ([]string, error) {
-	revisionsKey := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/revisions"
-	keys, err := app.etcd.List(revisionsKey, false)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return keys, err
 }
