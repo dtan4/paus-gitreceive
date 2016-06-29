@@ -26,6 +26,10 @@ if [ -n "$PAUS_ETCD_ENDPOINT" ]; then
   echo "EtcdEndpoint=$PAUS_ETCD_ENDPOINT" >> /paus/config
 fi
 
+if [ -n "$PAUS_MAX_APP_DEPLOY" ]; then
+  echo "MaxAppDeploy=$PAUS_MAX_APP_DEPLOY" >> /paus/config
+fi
+
 if [ -n "$PAUS_REPOSITORY_DIR" ]; then
   echo "RepositoryDir=$PAUS_REPOSITORY_DIR" >> /paus/config
   chown -R git:git $PAUS_REPOSITORY_DIR

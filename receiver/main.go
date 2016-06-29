@@ -29,7 +29,12 @@ func initialize() (*config.Config, *store.Etcd, error) {
 }
 
 func main() {
-	// printVersion()
+	if len(os.Args) > 1 {
+		if os.Args[1] == "-v" || os.Args[1] == "--version" {
+			printVersion()
+			os.Exit(0)
+		}
+	}
 
 	config, etcd, err := initialize()
 
@@ -45,12 +50,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	timestamp := util.Timestamp()
+	deployment := model.NewDeployment(application, os.Args[2], timestamp, config.RepositoryDir)
+
 	if !application.DirExists() {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
 		os.Exit(1)
 	}
 
-	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
+	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, deployment.ProjectName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -78,16 +86,19 @@ func main() {
 
 	fmt.Println("=====> docker-compose.yml was found")
 
-	compose, err := model.NewCompose(config.DockerHost, composeFilePath, application.ProjectName)
+	if err := rotateDeployments(etcd, application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
+
+	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
-	newComposeFilePath, err := prepareComposeFile(application, compose)
-
-	if err != nil {
+	if err := prepareComposeFile(application, deployment, compose); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
@@ -110,12 +121,12 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = application.RegisterMetadata(); err != nil {
+	if err = deployment.Register(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, application, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, application, deployment, config.BaseDomain, webContainer)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -124,7 +135,7 @@ func main() {
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
-	if err = util.RemoveUnpackedFiles(repositoryPath, newComposeFilePath); err != nil {
+	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

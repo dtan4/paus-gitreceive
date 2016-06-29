@@ -10,6 +10,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -85,6 +88,22 @@ func RunCommand(cmd *exec.Cmd) error {
 	}
 
 	return nil
+}
+
+func SortKeys(kv map[string]string) []string {
+	var keys []string
+
+	for k, _ := range kv {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	return keys
+}
+
+func Timestamp() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 func UnpackReceivedFiles(repositoryDir, username, projectName string, stdin io.Reader) (string, error) {

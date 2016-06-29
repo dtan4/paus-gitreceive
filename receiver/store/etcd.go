@@ -27,6 +27,29 @@ func NewEtcd(etcdEndpoint string) (*Etcd, error) {
 	return &Etcd{keysAPI}, nil
 }
 
+func (c *Etcd) Delete(key string) error {
+	_, err := c.keysAPI.Delete(context.Background(), key, &client.DeleteOptions{})
+
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete etcd entry. key: %s", key)
+	}
+
+	return nil
+}
+
+func (c *Etcd) DeleteDir(key string, recursive bool) error {
+	_, err := c.keysAPI.Delete(context.Background(), key, &client.DeleteOptions{
+		Dir:       true,
+		Recursive: recursive,
+	})
+
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete etcd directory. key: %s, recursive: %t", key, recursive)
+	}
+
+	return nil
+}
+
 func (c *Etcd) Get(key string) (string, error) {
 	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{})
 
@@ -46,7 +69,10 @@ func (c *Etcd) HasKey(key string) bool {
 func (c *Etcd) List(key string, recursive bool) ([]string, error) {
 	result := []string{}
 
-	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{Recursive: recursive})
+	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{
+		Recursive: recursive,
+		Sort:      true,
+	})
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list up etcd keys. key: %s, recursive: %v", key, recursive)

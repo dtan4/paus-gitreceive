@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
@@ -11,15 +12,16 @@ import (
 )
 
 const (
-	ConfigPrefix   = "paus"
-	ConfigFilePath = "/paus/config"
+	configPrefix   = "paus"
+	configFilePath = "/paus/config"
 )
 
 var (
-	ConfigNames = []string{
+	configNames = []string{
 		"BaseDomain",
 		"DockerHost",
 		"EtcdEndpoint",
+		"MaxAppDeploy",
 		"RepositoryDir",
 		"URIScheme",
 	}
@@ -29,6 +31,7 @@ type Config struct {
 	BaseDomain    string `envconfig:"base_domain"`
 	DockerHost    string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
 	EtcdEndpoint  string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
+	MaxAppDeploy  int64  `envconfig:"max_app_deploy" default:"10"`
 	RepositoryDir string `envconfig:"repository_dir" default:"/repos"`
 	URIScheme     string `envconfig:"uri_scheme"     default:"http"`
 }
@@ -64,24 +67,34 @@ func loadConfigFromFile(filePath string) (map[string]string, error) {
 func LoadConfig() (*Config, error) {
 	var config Config
 
-	err := envconfig.Process(ConfigPrefix, &config)
+	err := envconfig.Process(configPrefix, &config)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to load config from envs.")
 	}
 
-	if _, err := os.Stat(ConfigFilePath); err != nil {
+	if _, err := os.Stat(configFilePath); err != nil {
 		return &config, nil
 	}
 
-	configFromFile, err := loadConfigFromFile(ConfigFilePath)
+	configFromFile, err := loadConfigFromFile(configFilePath)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, configName := range ConfigNames {
-		reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
+	for _, configName := range configNames {
+		if configName == "MaxAppDeploy" {
+			n, err := strconv.ParseInt(configFromFile[configName], 10, 64)
+
+			if err != nil {
+				return nil, errors.Wrapf(err, "Failed to parse %s as integer. value: %s", configName, configFromFile[configName])
+			}
+
+			reflect.ValueOf(&config).Elem().FieldByName(configName).SetInt(n)
+		} else {
+			reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
+		}
 	}
 
 	return &config, nil

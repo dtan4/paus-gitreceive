@@ -1,41 +1,35 @@
 package model
 
 import (
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
 type Application struct {
-	Repository  string
-	Revision    string
-	Username    string
-	AppName     string
-	ProjectName string
-	etcd        *store.Etcd
+	Repository string
+	Username   string
+	AppName    string
+
+	etcd *store.Etcd
 }
 
+// args: user/app, 19fb23cd71a4cf2eab00ad1a393e40de4ed61531, user
 func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) {
 	if len(args) < 3 {
-		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
+		return nil, errors.Errorf("3 arguments (repository, revision, username) must be passed. got: %d", len(args))
 	}
 
 	repository := strings.Replace(args[0], "/", "-", -1)
-	revision := args[1]
 	username := args[2]
 	appName := strings.Replace(repository, username+"-", "", 1)
-	projectName := repository + "-" + revision[0:8]
 
 	return &Application{
-		Repository:  repository,
-		Revision:    revision,
-		Username:    username,
-		AppName:     appName,
-		ProjectName: projectName,
-		etcd:        etcd,
+		Repository: repository,
+		Username:   username,
+		AppName:    appName,
+		etcd:       etcd,
 	}, nil
 }
 
@@ -77,6 +71,39 @@ func (app *Application) BuildArgs() (map[string]string, error) {
 	}
 
 	return args, nil
+}
+
+func (app *Application) DeleteDeployment(deployment string) error {
+	key := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/deployments/" + deployment
+
+	if err := app.etcd.Delete(key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (app *Application) Deployments() (map[string]string, error) {
+	var deployments = make(map[string]string)
+
+	deploymentsKey := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/deployments/"
+	keys, err := app.etcd.List(deploymentsKey, false)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys {
+		value, err := app.etcd.Get(key)
+
+		if err != nil {
+			return nil, err
+		}
+
+		deployments[strings.Replace(key, deploymentsKey, "", 1)] = value
+	}
+
+	return deployments, nil
 }
 
 func (app *Application) DirExists() bool {
@@ -123,7 +150,7 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	return envs, nil
 }
 
-func (app *Application) RegisterMetadata() error {
+func (app *Application) RegisterMetadata(revision, timestamp string) error {
 	userDirectoryKey := "/paus/users/" + app.Username
 
 	if !app.etcd.HasKey(userDirectoryKey) {
@@ -134,11 +161,11 @@ func (app *Application) RegisterMetadata() error {
 
 	if !app.etcd.HasKey(appDirectoryKey) {
 		_ = app.etcd.Mkdir(appDirectoryKey)
+		_ = app.etcd.Mkdir(appDirectoryKey + "/deployments")
 		_ = app.etcd.Mkdir(appDirectoryKey + "/envs")
-		_ = app.etcd.Mkdir(appDirectoryKey + "/revisions")
 	}
 
-	if err := app.etcd.Set(appDirectoryKey+"/revisions/"+app.Revision, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := app.etcd.Set(appDirectoryKey+"/deployments/"+timestamp, revision); err != nil {
 		return err
 	}
 

@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/store"
+	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
 func deploy(application *model.Application, compose *model.Compose) (string, error) {
@@ -65,23 +65,22 @@ func injectEnvironmentVariables(application *model.Application, compose *model.C
 	return nil
 }
 
-func prepareComposeFile(application *model.Application, compose *model.Compose) (string, error) {
+func prepareComposeFile(application *model.Application, deployment *model.Deployment, compose *model.Compose) error {
 	if err := injectBuildArgs(application, compose); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := injectEnvironmentVariables(application, compose); err != nil {
-		return "", err
+		return err
 	}
 
 	compose.RewritePortBindings()
-	newComposeFilePath := filepath.Join(filepath.Dir(compose.ComposeFilePath), "docker-compose-"+strconv.FormatInt(time.Now().Unix(), 10)+".yml")
 
-	if err := compose.SaveAs(newComposeFilePath); err != nil {
-		return "", err
+	if err := compose.SaveAs(deployment.ComposeFilePath); err != nil {
+		return err
 	}
 
-	return newComposeFilePath, nil
+	return nil
 }
 
 func printDeployedURLs(repository string, config *config.Config, identifiers []string) {
@@ -93,4 +92,43 @@ func printDeployedURLs(repository string, config *config.Config, identifiers []s
 		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
 		fmt.Println("         " + url)
 	}
+}
+
+func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppDeploy int64, dockerHost string, repositoryDir string) error {
+	deployments, err := application.Deployments()
+
+	if err != nil {
+		return err
+	}
+
+	if len(deployments) == 0 || int64(len(deployments)) < maxAppDeploy {
+		return nil
+	}
+
+	fmt.Println("=====> Max deploy limit reached.")
+
+	oldestTimestamp := util.SortKeys(deployments)[0]
+	oldestDeployment := model.NewDeployment(application, deployments[oldestTimestamp], oldestTimestamp, repositoryDir)
+
+	fmt.Println("=====> Stop " + oldestDeployment.Revision + " ...")
+
+	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath, oldestDeployment.ProjectName)
+
+	if err != nil {
+		return err
+	}
+
+	if err := compose.Stop(); err != nil {
+		return err
+	}
+
+	if err := application.DeleteDeployment(oldestTimestamp); err != nil {
+		return err
+	}
+
+	if err := vulcand.DeregisterInformation(etcd, oldestDeployment); err != nil {
+		return err
+	}
+
+	return nil
 }
