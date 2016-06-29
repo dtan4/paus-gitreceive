@@ -83,7 +83,7 @@ func main() {
 
 	fmt.Println("=====> docker-compose.yml was found")
 
-	if err := rotateDeployments(application, config.MaxAppDeploy, config.DockerHost, repositoryPath); err != nil {
+	if err := rotateDeployments(application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

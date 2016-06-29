@@ -94,7 +94,7 @@ func printDeployedURLs(repository string, config *config.Config, identifiers []s
 	}
 }
 
-func rotateDeployments(application *model.Application, maxAppDeploy int64, dockerHost string, repositoryPath string) error {
+func rotateDeployments(application *model.Application, maxAppDeploy int64, dockerHost string, repositoryDir string) error {
 	deployments, err := application.Deployments()
 
 	if err != nil {
@@ -105,9 +105,14 @@ func rotateDeployments(application *model.Application, maxAppDeploy int64, docke
 		return nil
 	}
 
-	oldestDeployment := util.SortKeys(deployments)[0]
-	composeFilePath := model.ComposeFilePath(repositoryPath, oldestDeployment)
-	compose, err := model.NewCompose(dockerHost, composeFilePath, application.Repository+"-"+deployments[oldestDeployment][0:8])
+	oldestTimestamp := util.SortKeys(deployments)[0]
+	oldestDeployment := &model.Deployment{
+		App:       application,
+		Revision:  deployments[oldestTimestamp],
+		Timestamp: oldestTimestamp,
+	}
+
+	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath(repositoryDir), oldestDeployment.ProjectName())
 
 	if err != nil {
 		return err
@@ -117,9 +122,11 @@ func rotateDeployments(application *model.Application, maxAppDeploy int64, docke
 		return err
 	}
 
-	if err := application.DeleteDeployment(oldestDeployment); err != nil {
+	if err := application.DeleteDeployment(oldestTimestamp); err != nil {
 		return err
 	}
+
+	// Remove Vulcand routing
 
 	return nil
 }
