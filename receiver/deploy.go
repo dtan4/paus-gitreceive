@@ -7,7 +7,9 @@ import (
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
 func deploy(application *model.Application, compose *model.Compose) (string, error) {
@@ -94,7 +96,7 @@ func printDeployedURLs(repository string, config *config.Config, identifiers []s
 	}
 }
 
-func rotateDeployments(application *model.Application, maxAppDeploy int64, dockerHost string, repositoryDir string) error {
+func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppDeploy int64, dockerHost string, repositoryDir string) error {
 	deployments, err := application.Deployments()
 
 	if err != nil {
@@ -126,7 +128,9 @@ func rotateDeployments(application *model.Application, maxAppDeploy int64, docke
 		return err
 	}
 
-	// Remove Vulcand routing
+	if err := vulcand.DeregisterInformation(etcd, oldestDeployment); err != nil {
+		return err
+	}
 
 	return nil
 }

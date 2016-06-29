@@ -37,6 +37,19 @@ func (c *Etcd) Delete(key string) error {
 	return nil
 }
 
+func (c *Etcd) DeleteDir(key string, recursive bool) error {
+	_, err := c.keysAPI.Delete(context.Background(), key, &client.DeleteOptions{
+		Dir:       true,
+		Recursive: recursive,
+	})
+
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete etcd directory. key: %s, recursive: %t", key, recursive)
+	}
+
+	return nil
+}
+
 func (c *Etcd) Get(key string) (string, error) {
 	resp, err := c.keysAPI.Get(context.Background(), key, &client.GetOptions{})
 

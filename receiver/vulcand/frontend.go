@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
@@ -23,11 +22,11 @@ type FrontendSettings struct {
 }
 
 // {"Type": "http", "BackendId": "$identifier", "Route": "Host(`$identifier.$base_domain`) && PathRegexp(`/`)", "Settings": {"TrustForwardHeader": true}}
-func setFrontend(etcd *store.Etcd, application *model.Application, identifier, baseDomain string) error {
+func setFrontend(etcd *store.Etcd, projectName, identifier, baseDomain string) error {
 	key := fmt.Sprintf("%s/frontends/%s/frontend", vulcandKeyBase, identifier)
 	frontend := Frontend{
 		Type:      "http",
-		BackendId: application.ProjectName,
+		BackendId: projectName,
 		Route:     fmt.Sprintf("Host(`%s.%s`) && PathRegexp(`/`)", strings.ToLower(identifier), strings.ToLower(baseDomain)),
 		Settings: FrontendSettings{
 			TrustForwardHeader: true,
@@ -45,6 +44,14 @@ func setFrontend(etcd *store.Etcd, application *model.Application, identifier, b
 	json := string(b)
 
 	if err := etcd.Set(key, json); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func unsetFrontend(etcd *store.Etcd, identifier string) error {
+	if err := etcd.DeleteDir(fmt.Sprintf("%s/frontends/%s", vulcandKeyBase, identifier), true); err != nil {
 		return err
 	}
 
