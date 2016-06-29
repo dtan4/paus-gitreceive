@@ -105,8 +105,12 @@ func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppD
 		return nil
 	}
 
+	fmt.Println("=====> Max deploy limit reached.")
+
 	oldestTimestamp := util.SortKeys(deployments)[0]
 	oldestDeployment := model.NewDeployment(application, deployments[oldestTimestamp], oldestTimestamp, repositoryDir)
+
+	fmt.Println("=====> Stop " + oldestDeployment.Revision + " ...")
 
 	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath, oldestDeployment.ProjectName)
 
