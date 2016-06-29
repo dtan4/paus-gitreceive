@@ -8,33 +8,28 @@ import (
 )
 
 type Application struct {
-	Repository  string
-	Revision    string
-	Username    string
-	AppName     string
-	ProjectName string
+	Repository string
+	Username   string
+	AppName    string
 
 	etcd *store.Etcd
 }
 
+// args: user/app, 19fb23cd71a4cf2eab00ad1a393e40de4ed61531, user
 func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) {
 	if len(args) < 3 {
-		return nil, errors.Errorf("3 arguments (revision, username, appName) must be passed. got: %d", len(args))
+		return nil, errors.Errorf("3 arguments (repository, revision, username) must be passed. got: %d", len(args))
 	}
 
 	repository := strings.Replace(args[0], "/", "-", -1)
-	revision := args[1]
 	username := args[2]
 	appName := strings.Replace(repository, username+"-", "", 1)
-	projectName := repository + "-" + revision[0:8]
 
 	return &Application{
-		Repository:  repository,
-		Revision:    revision,
-		Username:    username,
-		AppName:     appName,
-		ProjectName: projectName,
-		etcd:        etcd,
+		Repository: repository,
+		Username:   username,
+		AppName:    appName,
+		etcd:       etcd,
 	}, nil
 }
 
@@ -155,7 +150,7 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	return envs, nil
 }
 
-func (app *Application) RegisterMetadata(timestamp string) error {
+func (app *Application) RegisterMetadata(revision, timestamp string) error {
 	userDirectoryKey := "/paus/users/" + app.Username
 
 	if !app.etcd.HasKey(userDirectoryKey) {
@@ -170,7 +165,7 @@ func (app *Application) RegisterMetadata(timestamp string) error {
 		_ = app.etcd.Mkdir(appDirectoryKey + "/envs")
 	}
 
-	if err := app.etcd.Set(appDirectoryKey+"/deployments/"+timestamp, app.Revision); err != nil {
+	if err := app.etcd.Set(appDirectoryKey+"/deployments/"+timestamp, revision); err != nil {
 		return err
 	}
 

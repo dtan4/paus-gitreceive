@@ -25,3 +25,7 @@ func NewDeployment(app *Application, revision, timestamp, repositoryDir string) 
 		Timestamp:       timestamp,
 	}
 }
+
+func (d *Deployment) Register() error {
+	return d.app.RegisterMetadata(d.Revision, d.Timestamp)
+}

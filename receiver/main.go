@@ -50,12 +50,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	timestamp := util.Timestamp()
+	deployment := model.NewDeployment(application, os.Args[2], timestamp, config.RepositoryDir)
+
 	if !application.DirExists() {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
 		os.Exit(1)
 	}
 
-	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, application.ProjectName, os.Stdin)
+	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, deployment.ProjectName, os.Stdin)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -88,14 +91,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	compose, err := model.NewCompose(config.DockerHost, composeFilePath, application.ProjectName)
+	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
-
-	timestamp := util.Timestamp()
 
 	newComposeFilePath, err := prepareComposeFile(application, compose, timestamp)
 
@@ -122,12 +123,12 @@ func main() {
 
 	fmt.Println("=====> Registering metadata ...")
 
-	if err = application.RegisterMetadata(timestamp); err != nil {
+	if err = deployment.Register(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, application, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, application, deployment, config.BaseDomain, webContainer)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
