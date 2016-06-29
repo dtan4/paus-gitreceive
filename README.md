@@ -20,7 +20,7 @@ paus-gitreceive does:
 | `PAUS_BASE_DOMAIN`   | Required | Base domain for application URL                |                         | `pausapp.com`           |
 | `PAUS_DOCKER_HOST` |          | Endpoint of Docker daemon                       | `tcp://127.0.0.1:2375` | `tcp://127.0.0.1:2377` (Docker Swarm) |
 | `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
-| `PAUS_MAX_APP_DEPLOY`    |          | Limitation of deploy count per applciation | `10`                   | `30`                  |
+| `PAUS_MAX_APP_DEPLOY`    |          | Max number of deployments per applciation | `10`                   | `30`                  |
 | `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos`                   | `/repos`                  |
 | `PAUS_URI_SCHEME`        |          | URI scheme of application URL (`http`&#124;`https`) | `http`     | `http`                    |
 
