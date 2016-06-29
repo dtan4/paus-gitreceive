@@ -108,11 +108,7 @@ func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppD
 	}
 
 	oldestTimestamp := util.SortKeys(deployments)[0]
-	oldestDeployment := &model.Deployment{
-		App:       application,
-		Revision:  deployments[oldestTimestamp],
-		Timestamp: oldestTimestamp,
-	}
+	oldestDeployment := model.NewDeployment(application, deployments[oldestTimestamp], oldestTimestamp)
 
 	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath(repositoryDir), oldestDeployment.ProjectName())
 
