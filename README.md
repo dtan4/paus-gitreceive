@@ -34,7 +34,55 @@ $ make deps
 $ make
 ```
 
+### Run on Vagrant (Recommended)
+
+```bash
+$ cd receiver
+$ make deps
+$ make bin/receiver_linux-amd64
+
+$ cd ../
+$ cp ~/.ssh/id_rsa.github.pub id_rsa.pub
+
+$ cd coreos
+$ vagrant up
+$ vagrant ssh
+```
+
+```bash
+# On CoreOS VM
+
+# Set these as you like
+core@core-01 ~ $ export PAUS_USER=dtan4
+core@core-01 ~ $ export PAUS_APPNAME=docker-service-rails
+
+core@core-01 ~ $ cd synced_folder
+core@core-01 ~/synced_folder $ coreos/start.sh
+core@core-01 ~/synced_folder $ exit
+
+# When you want to restart paus-gitreceive, just run this at synced_folder:
+core@core-01 ~/synced_folder $ coreos/start.sh
+```
+
+```bash
+# Return to local machine
+
+$ vim ~/.ssh/config
+$ cat ~/.ssh/config
+Host pausapp.com
+     Hostname 172.17.8.101
+     User git
+     Port 2222
+     IdentityFile ~/.ssh/id_rsa.github
+
+# at your application repository
+$ git remote add paus git@pausapp.com:dtan4/docker-service-rails
+$ git push paus master
+```
+
 ### Run on local using Docker Compose
+
+It may be fail at some environments...
 
 ```bash
 # Set these as you like
