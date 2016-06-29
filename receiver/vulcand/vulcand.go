@@ -13,17 +13,17 @@ const (
 )
 
 func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error {
-	if err := unsetServer(etcd, deployment.ProjectName()); err != nil {
+	if err := unsetServer(etcd, deployment.ProjectName); err != nil {
 		return err
 	}
 
-	identifier := strings.ToLower(deployment.ProjectName())
+	identifier := strings.ToLower(deployment.ProjectName)
 
 	if err := unsetFrontend(etcd, identifier); err != nil {
 		return err
 	}
 
-	if err := unsetBackend(etcd, deployment.ProjectName()); err != nil {
+	if err := unsetBackend(etcd, deployment.ProjectName); err != nil {
 		return err
 	}
 
