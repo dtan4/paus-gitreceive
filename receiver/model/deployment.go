@@ -12,13 +12,12 @@ var (
 )
 
 type Deployment struct {
+	App             *Application
 	Branch          string
 	ComposeFilePath string
 	ProjectName     string
 	Revision        string
 	Timestamp       string
-
-	app *Application
 }
 
 // args:
@@ -39,7 +38,7 @@ func NewDeployment(app *Application, branch, revision, timestamp, repositoryDir 
 	composeFilePath := filepath.Join(repositoryDir, app.Username, projectName, "docker-compose-"+timestamp+".yml")
 
 	return &Deployment{
-		app:             app,
+		App:             app,
 		Branch:          branch,
 		ComposeFilePath: composeFilePath,
 		ProjectName:     projectName,
@@ -49,5 +48,5 @@ func NewDeployment(app *Application, branch, revision, timestamp, repositoryDir 
 }
 
 func (d *Deployment) Register() error {
-	return d.app.RegisterMetadata(d.Revision, d.Timestamp)
+	return d.App.RegisterMetadata(d.Revision, d.Timestamp)
 }
