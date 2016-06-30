@@ -108,7 +108,7 @@ func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppD
 	fmt.Println("=====> Max deploy limit reached.")
 
 	oldestTimestamp := util.SortKeys(deployments)[0]
-	oldestDeployment := model.NewDeployment(application, deployments[oldestTimestamp], oldestTimestamp, repositoryDir)
+	oldestDeployment := model.NewDeployment(application, "", deployments[oldestTimestamp], oldestTimestamp, repositoryDir)
 
 	fmt.Println("=====> Stop " + oldestDeployment.Revision + " ...")
 

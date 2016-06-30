@@ -50,11 +50,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	timestamp := util.Timestamp()
-	deployment := model.NewDeployment(application, os.Args[2], timestamp, config.RepositoryDir)
-
 	if !application.DirExists() {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
+		os.Exit(1)
+	}
+
+	timestamp := util.Timestamp()
+	deployment, err := model.DeploymentFromArgs(application, os.Args[1:], timestamp, config.RepositoryDir)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 
@@ -126,7 +131,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, application, deployment, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, webContainer)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
