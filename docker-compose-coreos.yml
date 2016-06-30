@@ -12,7 +12,7 @@ services:
       - PAUS_BASE_DOMAIN=pausapp.com
       - PAUS_DOCKER_HOST=tcp://172.17.8.101:2375
       - PAUS_ETCD_ENDPOINT=http://172.17.8.101:2379
-      - PAUS_MAX_APP_DEPLOY=0
+      - PAUS_MAX_APP_DEPLOY=2
       - PAUS_REPOSITORY_DIR=/repos
       - PAUS_URI_SCHEME=http
   gitreceive-upload-key:
