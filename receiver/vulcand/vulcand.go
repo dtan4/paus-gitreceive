@@ -16,7 +16,7 @@ func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error
 		return err
 	}
 
-	identifier := strings.ToLower(deployment.ProjectName)
+	identifier := strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Revision) // dtan4-app-19fb23cd
 
 	if err := unsetFrontend(etcd, identifier); err != nil {
 		return err
@@ -29,14 +29,15 @@ func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error
 	return nil
 }
 
-func RegisterInformation(etcd *store.Etcd, application *model.Application, deployment *model.Deployment, baseDomain string, webContainer *model.Container) ([]string, error) {
+func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDomain string, webContainer *model.Container) ([]string, error) {
 	if err := setBackend(etcd, deployment.ProjectName); err != nil {
 		return nil, err
 	}
 
 	identifiers := []string{
-		strings.ToLower(deployment.ProjectName),
-		strings.ToLower(application.Username + "-" + application.AppName),
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName),                             // dtan4-app
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Branch),   // dtan4-app-master
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Revision), // dtan4-app-19fb23cd
 	}
 
 	for _, identifier := range identifiers {

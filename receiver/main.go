@@ -126,7 +126,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, application, deployment, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, webContainer)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
