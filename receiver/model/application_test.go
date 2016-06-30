@@ -22,6 +22,8 @@ func TestApplicationFromArgs(t *testing.T) {
 		"dtan4/rails-sample",
 		"3e634e41d5a819a7586c621a6322ee4d5085232c",
 		"dtan4",
+		"4c:1f:92:b9:43:2b:23:0b:c0:e8:ab:12:cd:34:ef:56",
+		"refs/heads/branch",
 	}
 
 	expectedRepository := "dtan4-rails-sample"

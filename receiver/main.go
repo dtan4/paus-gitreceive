@@ -51,7 +51,7 @@ func main() {
 	}
 
 	timestamp := util.Timestamp()
-	deployment := model.NewDeployment(application, os.Args[2], timestamp, config.RepositoryDir)
+	deployment := model.NewDeployment(application, "", os.Args[2], timestamp, config.RepositoryDir)
 
 	if !application.DirExists() {
 		fmt.Fprintln(os.Stderr, "=====> Application not found: "+application.AppName)
