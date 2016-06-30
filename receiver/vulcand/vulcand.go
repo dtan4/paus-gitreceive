@@ -35,9 +35,9 @@ func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDom
 	}
 
 	identifiers := []string{
-		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName),                             // dtan4-app
-		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Branch),   // dtan4-app-master
-		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Revision), // dtan4-app-19fb23cd
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName),                                  // dtan4-app
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Branch),        // dtan4-app-master
+		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Revision[0:8]), // dtan4-app-19fb23cd
 	}
 
 	for _, identifier := range identifiers {
