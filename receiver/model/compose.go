@@ -172,6 +172,8 @@ func (c *Compose) SaveAs(filePath string) error {
 		return errors.Wrapf(err, "Failed to save as YAML file. path: %s", filePath)
 	}
 
+	c.ComposeFilePath = filePath
+
 	return nil
 }
 
