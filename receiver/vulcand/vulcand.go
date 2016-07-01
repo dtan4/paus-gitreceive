@@ -1,6 +1,7 @@
 package vulcand
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/model"
@@ -9,6 +10,10 @@ import (
 
 const (
 	vulcandKeyBase = "/vulcand"
+)
+
+var (
+	branchRegexp = regexp.MustCompile(`[^a-zA-Z0-9.-]`)
 )
 
 func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error {
@@ -34,8 +39,20 @@ func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDom
 		return nil, err
 	}
 
+	branchIdentifier := strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + branchRegexp.ReplaceAllString(deployment.Branch, "-"))
+
+	if len(branchIdentifier) > 63 {
+		branchIdentifier = branchIdentifier[0:63]
+	}
+
+	lastChar := string(branchIdentifier[len(branchIdentifier)-1])
+
+	if lastChar == "." || lastChar == "-" {
+		branchIdentifier = branchIdentifier[0:(len(branchIdentifier) - 1)]
+	}
+
 	identifiers := []string{
-		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Branch),        // dtan4-app-master
+		branchIdentifier, // dtan4-app-master
 		strings.ToLower(deployment.App.Username + "-" + deployment.App.AppName + "-" + deployment.Revision[0:8]), // dtan4-app-19fb23cd
 	}
 
