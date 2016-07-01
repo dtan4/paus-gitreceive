@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/pkg/errors"
@@ -41,10 +42,19 @@ type ComposeConfig struct {
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
-	prj := project.NewProject(&project.Context{
+	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
-	}, nil, nil)
+	}
+
+	ctx.ResourceLookup = &lookup.FileConfigLookup{}
+	ctx.EnvironmentLookup = &lookup.ComposableEnvLookup{
+		Lookups: []config.EnvironmentLookup{
+			&lookup.OsEnvLookup{},
+		},
+	}
+
+	prj := project.NewProject(&ctx, nil, nil)
 
 	if err := prj.Parse(); err != nil {
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
