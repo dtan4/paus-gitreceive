@@ -115,7 +115,7 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 	}
 
 	for k, v := range envs {
-		webService.Environment = append(webService.Environment, fmt.Sprintf("%s=\"%s\"", k, v))
+		webService.Environment = append(webService.Environment, fmt.Sprintf("%s=%s", k, v))
 	}
 }
 
