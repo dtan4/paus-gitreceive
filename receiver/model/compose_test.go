@@ -125,7 +125,7 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 	webEnvironment = svc.Environment
 
 	for key, value := range environmentVariables {
-		envString = fmt.Sprintf("%s=\"%s\"", key, value)
+		envString = fmt.Sprintf("%s=%s", key, value)
 
 		if !contains(webEnvironment, envString) {
 			t.Fatalf("Compose File V1 does not contain %s", key)
@@ -141,7 +141,7 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 	webEnvironment = svc.Environment
 
 	for key, value := range environmentVariables {
-		envString = fmt.Sprintf("%s=\"%s\"", key, value)
+		envString = fmt.Sprintf("%s=%s", key, value)
 
 		if !contains(webEnvironment, envString) {
 			t.Fatalf("Compose File V2 does not contain %s", key)
@@ -156,7 +156,7 @@ func TestInjectEnvironmentVariables(t *testing.T) {
 	webEnvironment = svc.Environment
 
 	oldEnvString := "FOO=hoge"
-	newEnvString := "FOO=\"hogefugapiyo\""
+	newEnvString := "FOO=hogefugapiyo"
 
 	if contains(webEnvironment, oldEnvString) {
 		t.Fatalf("Failed to update existing key FOO. %s still exists.", oldEnvString)
