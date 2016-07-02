@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/pkg/errors"
@@ -41,10 +42,19 @@ type ComposeConfig struct {
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
-	prj := project.NewProject(&project.Context{
+	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
-	}, nil, nil)
+	}
+
+	ctx.ResourceLookup = &lookup.FileConfigLookup{}
+	ctx.EnvironmentLookup = &lookup.ComposableEnvLookup{
+		Lookups: []config.EnvironmentLookup{
+			&lookup.OsEnvLookup{},
+		},
+	}
+
+	prj := project.NewProject(&ctx, nil, nil)
 
 	if err := prj.Parse(); err != nil {
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
@@ -104,8 +114,21 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 		return
 	}
 
+	envmap := make(map[string]string)
+
+	for _, env := range webService.Environment {
+		kv := strings.SplitN(env, "=", 2)
+		envmap[kv[0]] = kv[1]
+	}
+
 	for k, v := range envs {
-		webService.Environment = append(webService.Environment, fmt.Sprintf("%s=\"%s\"", k, v))
+		envmap[k] = v
+	}
+
+	webService.Environment = []string{}
+
+	for k, v := range envmap {
+		webService.Environment = append(webService.Environment, fmt.Sprintf("%s=%s", k, v))
 	}
 }
 
