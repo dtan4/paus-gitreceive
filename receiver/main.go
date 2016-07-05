@@ -55,8 +55,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	timestamp := util.Timestamp()
-	deployment, err := model.DeploymentFromArgs(application, os.Args[1:], timestamp, config.RepositoryDir)
+	deployment, err := model.DeploymentFromArgs(application, os.Args[1:], "", config.RepositoryDir)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -125,6 +124,8 @@ func main() {
 	}
 
 	fmt.Println("=====> Registering metadata ...")
+
+	deployment.Timestamp = util.Timestamp()
 
 	if err = deployment.Register(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
