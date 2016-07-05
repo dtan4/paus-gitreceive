@@ -118,7 +118,10 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 
 	for _, env := range webService.Environment {
 		kv := strings.SplitN(env, "=", 2)
-		envmap[kv[0]] = kv[1]
+
+		if len(kv) == 2 {
+			envmap[kv[0]] = kv[1]
+		}
 	}
 
 	for k, v := range envs {
