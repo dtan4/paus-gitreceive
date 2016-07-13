@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/store"
@@ -149,6 +150,37 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	}
 
 	return envs, nil
+}
+
+func (app *Application) HealthCheck() (string, int, int, error) {
+	keyBase := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/healthcheck"
+
+	path, err := app.etcd.Get(keyBase + "/path")
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	i, err := app.etcd.Get(keyBase + "/interval")
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	interval, err := strconv.Atoi(i)
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	m, err := app.etcd.Get(keyBase + "/max-try")
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	maxTry, err := strconv.Atoi(m)
+	if err != nil {
+		return "", 0, 0, err
+	}
+
+	return path, interval, maxTry, nil
 }
 
 func (app *Application) RegisterMetadata(revision, timestamp string) error {
