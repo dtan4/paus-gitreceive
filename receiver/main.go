@@ -123,6 +123,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	path, interval, maxTry, err := application.HealthCheck()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
+
+	callback := func(path string, try int) {
+		fmt.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
+	}
+
+	fmt.Println("=====> Start healthcheck ...")
+
+	if !webContainer.ExecuteHealthCheck(path, interval, maxTry, callback) {
+		fmt.Fprintln(os.Stderr, "=====> Web container is not active. Aborted.")
+		compose.Stop()
+		os.Exit(1)
+	}
+
 	fmt.Println("=====> Registering metadata ...")
 
 	deployment.Timestamp = util.Timestamp()

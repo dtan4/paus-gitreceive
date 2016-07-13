@@ -1,6 +1,10 @@
 package model
 
 import (
+	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 )
@@ -11,6 +15,8 @@ type Container struct {
 	containerInfo *docker.Container
 	exposedPort   docker.PortBinding
 }
+
+type HealthCheckFunc func(path string, try int)
 
 func firstExposedPort(ports map[docker.Port][]docker.PortBinding) docker.PortBinding {
 	ary := []docker.PortBinding{}
@@ -35,6 +41,23 @@ func ContainerFromID(dockerHost, containerId string) (*Container, error) {
 	exposedPort := firstExposedPort(containerInfo.NetworkSettings.Ports)
 
 	return &Container{containerId, client, containerInfo, exposedPort}, nil
+}
+
+func (c *Container) ExecuteHealthCheck(path string, interval, maxTry int, callback HealthCheckFunc) bool {
+	url := fmt.Sprintf("http://%s:%s%s", c.HostIP(), c.HostPort(), path)
+
+	for i := 1; i <= maxTry; i++ {
+		callback(path, i)
+
+		resp, err := http.Get(url)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			return true
+		}
+
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+
+	return false
 }
 
 func (c *Container) HostIP() string {
