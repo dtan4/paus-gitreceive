@@ -30,7 +30,6 @@ paus-gitreceive does:
 
 ```bash
 $ cd receiver
-$ make deps
 $ make
 ```
 
@@ -38,7 +37,6 @@ $ make
 
 ```bash
 $ cd receiver
-$ make deps
 $ make bin/receiver_linux-amd64
 
 $ cd ../
