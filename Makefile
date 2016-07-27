@@ -8,10 +8,10 @@ PAUS_APPNAME ?= test
 SSH_PUBLIC_KEY ?= ~/.ssh/id_rsa.pub
 DOCKER_HOST ?= localhost
 
-.DEFAULT_GOAL := docker-release-build
+.DEFAULT_GOAL := docker-build
 
 .PHONY: ci-docker-release
-ci-docker-release: docker-release-build
+ci-docker-release: docker-build
 	@docker login -e="$(DOCKER_QUAY_EMAIL)" -u="$(DOCKER_QUAY_USERNAME)" -p="$(DOCKER_QUAY_PASSWORD)" $(DOCKER_REPOSITORY)
 	docker push $(DOCKER_IMAGE)
 
@@ -35,7 +35,7 @@ compose-stop:
 docker-push:
 	docker push $(DOCKER_IMAGE)
 
-.PHONY: docker-release-build
-docker-release-build:
+.PHONY: docker-build
+docker-build:
 	$(MAKE) -C receiver bin/receiver_linux-amd64
-	docker build -f Dockerfile.release -t $(DOCKER_IMAGE) .
+	docker build -t $(DOCKER_IMAGE) .

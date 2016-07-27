@@ -3,7 +3,6 @@ services:
   gitreceive:
     build:
       context: .
-      dockerfile: Dockerfile.release
     ports:
       - "2222:22"
     volumes:
