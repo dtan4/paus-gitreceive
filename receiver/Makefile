@@ -1,6 +1,5 @@
 VERSION := 0.1.0
 REVISION := $(shell git rev-parse --short HEAD)
-BUILDTIME := $(shell date '+%Y/%m/%d %H:%M:%S %Z')
 GOVERSION := $(subst go version ,,$(shell go version))
 
 BINARY := receiver
@@ -8,7 +7,7 @@ LINUX_AMD64_SUFFIX := _linux-amd64
 
 SOURCES := $(shell find . -name '*.go' -type f)
 
-LDFLAGS := -ldflags="-w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -X \"main.BuildTime=$(BUILDTIME)\" -X \"main.GoVersion=$(GOVERSION)\""
+LDFLAGS := -ldflags="-w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -X \"main.GoVersion=$(GOVERSION)\""
 
 GLIDE_VERSION := 0.11.1
 
