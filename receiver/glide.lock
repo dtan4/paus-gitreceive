@@ -1,16 +1,14 @@
-hash: 5a52dc428baf8df49ea259ec8bc2d17cdfb1c29bbc6c94b49eeba8f723725100
-updated: 2016-07-27T19:36:42.592843158+09:00
+hash: e2456ed949d2385f72ac010fc14d83e04d4502ad6240c80279bf26d131d6b746
+updated: 2016-08-12T21:25:17.523909981+09:00
 imports:
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: a75688bd1778756e86329e89980802e382440a67
+  version: c33ea20fefe0f435374258ca201cd5fc5edd0ab3
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
 - name: github.com/docker/docker
-  version: 6857c0a040cc3aabadd0dbf2a1a517ddc3d02fc8
+  version: d8240c8e27b625c6c2b7982e2473cce46e2a9ddc
   subpackages:
   - pkg/urlutil
   - runconfig/opts
@@ -28,7 +26,7 @@ imports:
   - pkg/system
   - pkg/longpath
 - name: github.com/docker/engine-api
-  version: dccf10e58ac9d544c9f7fadcc3f60a8413d0df98
+  version: 1de6a7919903dfbbabd4b21b139dc583bad0314e
   subpackages:
   - types/strslice
   - types
@@ -36,17 +34,18 @@ imports:
   - types/container
   - types/network
   - types/filters
+  - types/mount
   - types/registry
   - types/swarm
   - types/versions
 - name: github.com/docker/go-connections
-  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+  version: 0bad1a3951398f88ef4dd75fdb42af374430be89
   subpackages:
   - nat
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: eb879ae3e2b84e2a142af415b679ddeda47ec71c
 - name: github.com/docker/libcompose
-  version: e1a83f7bb6aee428e9d3d68302524c8f04791461
+  version: c10fa1d7ef4e0fe05b2bc9ca7444ea421b1df236
   subpackages:
   - project
   - config
@@ -59,13 +58,13 @@ imports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
-  version: 1b5ec1fc29ec3423c407f26a1e092d6624414891
+  version: a53ba79627e888ef775bdcf15813f07d7a232867
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/kelseyhightower/envconfig
-  version: 91921eb4cf999321cdbeebdba5a03555800d493b
+  version: 3ef4de09ad56571e5d8b3cfdcd31941c0c5e3db9
 - name: github.com/opencontainers/runc
-  version: 522674998576b3aefdde233ffab20f763b83ac19
+  version: 91ff092487fd45d0bcafc96d18d053cc242875a1
   subpackages:
   - libcontainer/user
 - name: github.com/pkg/errors
@@ -73,9 +72,9 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/spf13/pflag
-  version: 1560c1005499d61b80f865c04d39ca7505bf7f0b
+  version: f676131e2660dc8cd88de99f7486d34aa8172635
 - name: github.com/ugorji/go
-  version: 3487a5545b3d480987dfb0492035299077fab33a
+  version: 4a1cb5252a6951f715a85d0e4be334c2a2dbf2a2
   subpackages:
   - codec
 - name: github.com/xeipuuv/gojsonpointer
@@ -83,11 +82,12 @@ imports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
+  version: 4f624f6197547606054e042e7903db103585e151
 - name: golang.org/x/net
-  version: 6a513affb38dc9788b449d59ffed099b8de18fa0
+  version: 07b51741c1d6423d4a6abab1c49940ec09cb1aaf
   subpackages:
   - context
+  - context/ctxhttp
 - name: golang.org/x/sys
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:

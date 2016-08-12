@@ -9,6 +9,7 @@ import:
 - package: github.com/pkg/errors
   version: ~0.7.0
 - package: github.com/docker/libcompose
+  version: 0.3.0
   subpackages:
   - project
   - config
