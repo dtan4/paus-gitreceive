@@ -47,7 +47,7 @@ func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, erro
 		ProjectName:  projectName,
 	}
 
-	ctx.ResourceLookup = &lookup.FileConfigLookup{}
+	ctx.ResourceLookup = &lookup.FileResourceLookup{}
 	ctx.EnvironmentLookup = &lookup.ComposableEnvLookup{
 		Lookups: []config.EnvironmentLookup{
 			&lookup.OsEnvLookup{},

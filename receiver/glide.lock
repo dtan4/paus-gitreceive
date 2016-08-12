@@ -1,28 +1,52 @@
 hash: 5a52dc428baf8df49ea259ec8bc2d17cdfb1c29bbc6c94b49eeba8f723725100
-updated: 2016-06-30T20:00:14.020587918+09:00
+updated: 2016-07-27T19:36:42.592843158+09:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: 0c40f4a7e3e00ce19b17742289cedab27247323e
+  version: a75688bd1778756e86329e89980802e382440a67
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
 - name: github.com/docker/docker
-  version: e3ad63f7e44775335603ed23d34e1369eb2452b0
+  version: 6857c0a040cc3aabadd0dbf2a1a517ddc3d02fc8
   subpackages:
   - pkg/urlutil
+  - runconfig/opts
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/homedir
+  - pkg/stdcopy
+  - pkg/mount
+  - pkg/signal
+  - pkg/idtools
+  - pkg/ioutils
+  - pkg/pools
+  - pkg/promise
+  - pkg/system
+  - pkg/longpath
 - name: github.com/docker/engine-api
-  version: f50fbe5f9c4c8eeed591549d2c8187f4076f3717
+  version: dccf10e58ac9d544c9f7fadcc3f60a8413d0df98
   subpackages:
   - types/strslice
+  - types
+  - types/blkiodev
+  - types/container
+  - types/network
+  - types/filters
+  - types/registry
+  - types/swarm
+  - types/versions
 - name: github.com/docker/go-connections
   version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
   subpackages:
   - nat
+- name: github.com/docker/go-units
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/docker/libcompose
-  version: 78932cac4f5c95fdbfbe5d8932f028a69334d9d2
+  version: e1a83f7bb6aee428e9d3d68302524c8f04791461
   subpackages:
   - project
   - config
@@ -35,33 +59,23 @@ imports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
-  version: 7e2450a717e8725de58dc1530218cd64117861b3
-  subpackages:
-  - external/github.com/docker/docker/opts
-  - external/github.com/docker/docker/pkg/archive
-  - external/github.com/docker/docker/pkg/fileutils
-  - external/github.com/docker/docker/pkg/homedir
-  - external/github.com/docker/docker/pkg/stdcopy
-  - external/github.com/docker/go-units
-  - external/github.com/hashicorp/go-cleanhttp
-  - external/github.com/Sirupsen/logrus
-  - external/github.com/docker/docker/pkg/idtools
-  - external/github.com/docker/docker/pkg/ioutils
-  - external/github.com/docker/docker/pkg/pools
-  - external/github.com/docker/docker/pkg/promise
-  - external/github.com/docker/docker/pkg/system
-  - external/github.com/docker/docker/pkg/longpath
-  - external/github.com/opencontainers/runc/libcontainer/user
-  - external/golang.org/x/sys/unix
-  - external/golang.org/x/net/context
+  version: 1b5ec1fc29ec3423c407f26a1e092d6624414891
+- name: github.com/hashicorp/go-cleanhttp
+  version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/kelseyhightower/envconfig
-  version: cea086319492c3940683ea5e122aa5de70a33923
+  version: 91921eb4cf999321cdbeebdba5a03555800d493b
+- name: github.com/opencontainers/runc
+  version: 522674998576b3aefdde233ffab20f763b83ac19
+  subpackages:
+  - libcontainer/user
 - name: github.com/pkg/errors
   version: 01fa4104b9c248c8945d14d9f128454d5b28d595
 - name: github.com/Sirupsen/logrus
-  version: f3cfb454f4c209e6668c95216c4744b8fddb2356
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
+- name: github.com/spf13/pflag
+  version: 1560c1005499d61b80f865c04d39ca7505bf7f0b
 - name: github.com/ugorji/go
-  version: a396ed22fc049df733440d90efe17475e3929ccb
+  version: 3487a5545b3d480987dfb0492035299077fab33a
   subpackages:
   - codec
 - name: github.com/xeipuuv/gojsonpointer
@@ -69,15 +83,15 @@ imports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: d5336c75940ef31c9ceeb0ae64cf92944bccb4ee
+  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 - name: golang.org/x/net
-  version: fb93926129b8ec0056f2f458b1f519654814edf0
+  version: 6a513affb38dc9788b449d59ffed099b8de18fa0
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: 62bee037599929a6e9146f29d10dd5208c43507d
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
-devImports: []
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
+testImports: []
