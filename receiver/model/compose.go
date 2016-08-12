@@ -3,7 +3,9 @@ package model
 // TODO: Use github.com/docker/libcompose
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,6 +16,7 @@ import (
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -68,12 +71,48 @@ func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, erro
 	}, nil
 }
 
-func (c *Compose) Build() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "build")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
+func (c *Compose) Build(dockerHost, registryDomain string, deployment *Deployment) error {
+	var (
+		buildArgs []docker.BuildArg
+		opts      docker.BuildImageOptions
+		svc       *config.ServiceConfig
+	)
 
-	if err := util.RunCommand(cmd); err != nil {
-		return err
+	reader, outputBuf := io.Pipe()
+	go func() {
+		sc := bufio.NewScanner(reader)
+
+		for sc.Scan() {
+			fmt.Println("      " + sc.Text())
+		}
+	}()
+
+	client, _ := docker.NewClient(dockerHost)
+
+	for _, name := range c.project.ServiceConfigs.Keys() {
+		svc, _ = c.project.ServiceConfigs.Get(name)
+
+		if svc.Build.Context == "" {
+			continue
+		}
+
+		for k, v := range svc.Build.Args {
+			buildArgs = append(buildArgs, docker.BuildArg{Name: k, Value: v})
+		}
+
+		opts = docker.BuildImageOptions{
+			BuildArgs:      buildArgs,
+			ContextDir:     svc.Build.Context,
+			Dockerfile:     svc.Build.Dockerfile,
+			Name:           fmt.Sprintf("%s/%s/%s-%s:%s", registryDomain, deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
+			OutputStream:   outputBuf,
+			Pull:           true,
+			SuppressOutput: false,
+		}
+
+		if err := client.BuildImage(opts); err != nil {
+			return errors.Wrapf(err, "Failed to build image. service: %s", name)
+		}
 	}
 
 	return nil

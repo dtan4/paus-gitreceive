@@ -107,7 +107,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose)
+	webContainerID, err := deploy(application, compose, config.DockerHost, config.RegistryDomain, deployment)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

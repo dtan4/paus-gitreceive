@@ -11,12 +11,12 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
-func deploy(application *model.Application, compose *model.Compose) (string, error) {
+func deploy(application *model.Application, compose *model.Compose, dockerHost, registryDomain string, deployment *model.Deployment) (string, error) {
 	var err error
 
 	fmt.Println("=====> Building ...")
 
-	if err = compose.Build(); err != nil {
+	if err = compose.Build(dockerHost, registryDomain, deployment); err != nil {
 		return "", err
 	}
 
