@@ -21,6 +21,7 @@ paus-gitreceive does:
 | `PAUS_DOCKER_HOST` |          | Endpoint of Docker daemon                       | `tcp://127.0.0.1:2375` | `tcp://127.0.0.1:2377` (Docker Swarm) |
 | `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
 | `PAUS_MAX_APP_DEPLOY`    |          | Max number of deployments per applciation | `10`                   | `30`                  |
+| `PAUS_REGISTRY_DOMAIN`    |          | Domain name of Docker Registry (Private Registry, ECR...) | `(empty)` | `012345678912.dkr.ecr.us-west-2.amazonaws.com` |
 | `PAUS_REPOSITORY_DIR`    |          | Directory to store repository files | `/repos`                   | `/repos`                  |
 | `PAUS_URI_SCHEME`        |          | URI scheme of application URL (`http`&#124;`https`) | `http`     | `http`                    |
 
