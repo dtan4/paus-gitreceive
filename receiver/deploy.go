@@ -16,7 +16,7 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	fmt.Println("=====> Building ...")
 
-	if err = compose.Build(deployment); err != nil {
+	if _, err = compose.Build(deployment); err != nil {
 		return "", err
 	}
 

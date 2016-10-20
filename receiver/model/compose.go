@@ -77,11 +77,12 @@ func (c *Compose) ImageName(username, appName, serviceName, revision string) str
 	return fmt.Sprintf("%s/%s-%s-%s:%s", c.RegistryDomain, username, appName, serviceName, revision)
 }
 
-func (c *Compose) Build(deployment *Deployment) error {
+func (c *Compose) Build(deployment *Deployment) ([]string, error) {
 	var (
 		buildArgs []docker.BuildArg
 		opts      docker.BuildImageOptions
 		svc       *config.ServiceConfig
+		image     string
 	)
 
 	reader, outputBuf := io.Pipe()
@@ -94,6 +95,7 @@ func (c *Compose) Build(deployment *Deployment) error {
 	}()
 
 	client, _ := docker.NewClient(c.dockerHost)
+	images := []string{}
 
 	for _, name := range c.project.ServiceConfigs.Keys() {
 		svc, _ = c.project.ServiceConfigs.Get(name)
@@ -106,22 +108,30 @@ func (c *Compose) Build(deployment *Deployment) error {
 			buildArgs = append(buildArgs, docker.BuildArg{Name: k, Value: v})
 		}
 
+		if svc.Image == "" {
+			image = c.ImageName(deployment.App.Username, deployment.App.AppName, name, deployment.Revision)
+		} else {
+			image = svc.Image
+		}
+
 		opts = docker.BuildImageOptions{
 			BuildArgs:      buildArgs,
 			ContextDir:     svc.Build.Context,
 			Dockerfile:     svc.Build.Dockerfile,
-			Name:           c.ImageName(deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
+			Name:           image,
 			OutputStream:   outputBuf,
 			Pull:           true,
 			SuppressOutput: false,
 		}
 
 		if err := client.BuildImage(opts); err != nil {
-			return errors.Wrapf(err, "Failed to build image. service: %s", name)
+			return []string{}, errors.Wrapf(err, "Failed to build image. service: %s", name)
 		}
+
+		images = append(images, image)
 	}
 
-	return nil
+	return images, nil
 }
 
 func (c *Compose) GetContainerID(service string) (string, error) {
