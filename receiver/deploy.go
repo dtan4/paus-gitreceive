@@ -16,7 +16,15 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	fmt.Println("=====> Building ...")
 
-	if _, err = compose.Build(deployment); err != nil {
+	images, err := compose.Build(deployment)
+
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("=====> Pushing ...")
+
+	if err = compose.Push(images); err != nil {
 		return "", err
 	}
 

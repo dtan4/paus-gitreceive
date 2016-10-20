@@ -136,6 +136,28 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 	return images, nil
 }
 
+func (c *Compose) Push(images []*Image) error {
+	var (
+		opts docker.PushImageOptions
+	)
+
+	client, _ := docker.NewClient(c.dockerHost)
+
+	for _, image := range images {
+		opts = docker.PushImageOptions{
+			Registry: image.Registry,
+			Name:     image.Name,
+			Tag:      image.Tag,
+		}
+
+		if err := client.PushImage(opts, docker.AuthConfiguration{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *Compose) GetContainerID(service string) (string, error) {
 	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "ps", "-q", service)
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
