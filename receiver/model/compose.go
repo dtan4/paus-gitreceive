@@ -73,6 +73,10 @@ func NewCompose(dockerHost, composeFilePath, projectName, registryDomain string)
 	}, nil
 }
 
+func (c *Compose) ImageName(username, appName, serviceName, revision string) string {
+	return fmt.Sprintf("%s/%s-%s-%s:%s", c.RegistryDomain, username, appName, serviceName, revision)
+}
+
 func (c *Compose) Build(deployment *Deployment) error {
 	var (
 		buildArgs []docker.BuildArg
@@ -106,7 +110,7 @@ func (c *Compose) Build(deployment *Deployment) error {
 			BuildArgs:      buildArgs,
 			ContextDir:     svc.Build.Context,
 			Dockerfile:     svc.Build.Dockerfile,
-			Name:           fmt.Sprintf("%s/%s/%s-%s:%s", c.RegistryDomain, deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
+			Name:           c.ImageName(deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
 			OutputStream:   outputBuf,
 			Pull:           true,
 			SuppressOutput: false,
