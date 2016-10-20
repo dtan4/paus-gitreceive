@@ -1,38 +1,19 @@
+NAME := receiver
 VERSION := 0.1.0
 REVISION := $(shell git rev-parse --short HEAD)
 GOVERSION := $(subst go version ,,$(shell go version))
 
-BINARY := receiver
 LINUX_AMD64_SUFFIX := _linux-amd64
 
-SOURCES := $(shell find . -name '*.go' -type f)
+LDFLAGS := -ldflags="-s -w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -X \"main.GoVersion=$(GOVERSION)\""
 
-LDFLAGS := -ldflags="-w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -X \"main.GoVersion=$(GOVERSION)\""
+.DEFAULT_GOAL := bin/$(NAME)
 
-GLIDE_VERSION := 0.11.1
+bin/$(NAME): deps
+	go build $(LDFLAGS) -o bin/$(NAME)
 
-.DEFAULT_GOAL := bin/$(BINARY)
-
-glide:
-ifeq ($(shell uname),Darwin)
-	curl -fL https://github.com/Masterminds/glide/releases/download/v$(GLIDE_VERSION)/glide-v$(GLIDE_VERSION)-darwin-amd64.zip -o glide.zip
-	unzip glide.zip
-	mv ./darwin-amd64/glide ./glide
-	rm -fr ./darwin-amd64
-	rm ./glide.zip
-else
-	curl -fL https://github.com/Masterminds/glide/releases/download/v$(GLIDE_VERSION)/glide-v$(GLIDE_VERSION)-linux-amd64.zip -o glide.zip
-	unzip glide.zip
-	mv ./linux-amd64/glide ./glide
-	rm -fr ./linux-amd64
-	rm ./glide.zip
-endif
-
-bin/$(BINARY): deps $(SOURCES)
-	go build $(LDFLAGS) -o bin/$(BINARY)
-
-bin/$(BINARY)$(LINUX_AMD64_SUFFIX): deps $(SOURCES)
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY)$(LINUX_AMD64_SUFFIX)
+bin/$(NAME)$(LINUX_AMD64_SUFFIX): deps
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(NAME)$(LINUX_AMD64_SUFFIX)
 
 .PHONY: clean
 clean:
@@ -41,8 +22,18 @@ clean:
 
 .PHONY: deps
 deps: glide
-	./glide install
+	glide install
+
+.PHONY: glide
+glide:
+ifeq ($(shell command -v glide 2> /dev/null),)
+	curl https://glide.sh/get | sh
+endif
 
 .PHONY: test
 test:
-	go test -v . ./model
+	go test -v `glide novendor`
+
+.PHONY: update-deps
+update-deps: glide
+	glide update
