@@ -1,5 +1,5 @@
 hash: e2456ed949d2385f72ac010fc14d83e04d4502ad6240c80279bf26d131d6b746
-updated: 2016-08-12T21:25:17.523909981+09:00
+updated: 2016-10-20T14:21:42.393162371+09:00
 imports:
 - name: github.com/coreos/etcd
   version: c33ea20fefe0f435374258ca201cd5fc5edd0ab3
@@ -10,32 +10,32 @@ imports:
 - name: github.com/docker/docker
   version: d8240c8e27b625c6c2b7982e2473cce46e2a9ddc
   subpackages:
-  - pkg/urlutil
-  - runconfig/opts
   - opts
   - pkg/archive
   - pkg/fileutils
   - pkg/homedir
-  - pkg/stdcopy
-  - pkg/mount
-  - pkg/signal
   - pkg/idtools
   - pkg/ioutils
+  - pkg/longpath
+  - pkg/mount
   - pkg/pools
   - pkg/promise
+  - pkg/signal
+  - pkg/stdcopy
   - pkg/system
-  - pkg/longpath
+  - pkg/urlutil
+  - runconfig/opts
 - name: github.com/docker/engine-api
   version: 1de6a7919903dfbbabd4b21b139dc583bad0314e
   subpackages:
-  - types/strslice
   - types
   - types/blkiodev
   - types/container
-  - types/network
   - types/filters
   - types/mount
+  - types/network
   - types/registry
+  - types/strslice
   - types/swarm
   - types/versions
 - name: github.com/docker/go-connections
@@ -47,14 +47,14 @@ imports:
 - name: github.com/docker/libcompose
   version: c10fa1d7ef4e0fe05b2bc9ca7444ea421b1df236
   subpackages:
-  - project
   - config
-  - lookup
-  - utils
-  - yaml
   - logger
+  - lookup
+  - project
   - project/events
   - project/options
+  - utils
+  - yaml
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
@@ -68,7 +68,7 @@ imports:
   subpackages:
   - libcontainer/user
 - name: github.com/pkg/errors
-  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
+  version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/spf13/pflag
