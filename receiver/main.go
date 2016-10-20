@@ -95,7 +95,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName)
+	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.RegistryDomain)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -107,7 +107,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose, config.DockerHost, config.RegistryDomain, deployment)
+	webContainerID, err := deploy(application, compose, deployment)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

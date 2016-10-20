@@ -32,6 +32,7 @@ var (
 type Compose struct {
 	ComposeFilePath string
 	ProjectName     string
+	RegistryDomain  string
 
 	dockerHost string
 	project    *project.Project
@@ -44,7 +45,7 @@ type ComposeConfig struct {
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
 }
 
-func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
+func NewCompose(dockerHost, composeFilePath, projectName, registryDomain string) (*Compose, error) {
 	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
@@ -66,12 +67,13 @@ func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, erro
 	return &Compose{
 		ComposeFilePath: composeFilePath,
 		ProjectName:     projectName,
+		RegistryDomain:  registryDomain,
 		dockerHost:      dockerHost,
 		project:         prj,
 	}, nil
 }
 
-func (c *Compose) Build(dockerHost, registryDomain string, deployment *Deployment) error {
+func (c *Compose) Build(deployment *Deployment) error {
 	var (
 		buildArgs []docker.BuildArg
 		opts      docker.BuildImageOptions
@@ -87,7 +89,7 @@ func (c *Compose) Build(dockerHost, registryDomain string, deployment *Deploymen
 		}
 	}()
 
-	client, _ := docker.NewClient(dockerHost)
+	client, _ := docker.NewClient(c.dockerHost)
 
 	for _, name := range c.project.ServiceConfigs.Keys() {
 		svc, _ = c.project.ServiceConfigs.Get(name)
@@ -104,7 +106,7 @@ func (c *Compose) Build(dockerHost, registryDomain string, deployment *Deploymen
 			BuildArgs:      buildArgs,
 			ContextDir:     svc.Build.Context,
 			Dockerfile:     svc.Build.Dockerfile,
-			Name:           fmt.Sprintf("%s/%s/%s-%s:%s", registryDomain, deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
+			Name:           fmt.Sprintf("%s/%s/%s-%s:%s", c.RegistryDomain, deployment.App.Username, deployment.App.AppName, name, deployment.Revision),
 			OutputStream:   outputBuf,
 			Pull:           true,
 			SuppressOutput: false,

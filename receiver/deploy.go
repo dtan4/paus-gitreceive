@@ -11,12 +11,12 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
-func deploy(application *model.Application, compose *model.Compose, dockerHost, registryDomain string, deployment *model.Deployment) (string, error) {
+func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment) (string, error) {
 	var err error
 
 	fmt.Println("=====> Building ...")
 
-	if err = compose.Build(dockerHost, registryDomain, deployment); err != nil {
+	if err = compose.Build(deployment); err != nil {
 		return "", err
 	}
 
@@ -112,7 +112,8 @@ func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppD
 
 	fmt.Println("=====> Stop " + oldestDeployment.Revision + " ...")
 
-	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath, oldestDeployment.ProjectName)
+	// TODO: set registryDomain
+	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath, oldestDeployment.ProjectName, "")
 
 	if err != nil {
 		return err
