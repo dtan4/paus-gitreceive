@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	dockerHost  = "unix:///var/run/docker.sock"
-	projectName = "paustest"
+	dockerHost     = "unix:///var/run/docker.sock"
+	projectName    = "paustest"
+	registryDomain = "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com"
 )
 
 var (
@@ -49,10 +50,10 @@ func setup() {
 	v2FilePathBuildArg = fixturePath("docker-compose-v2-buildarg.yml")
 	v2FilePathNoBuildEnv = fixturePath("docker-compose-v2-nobuildenv.yml")
 
-	v1Compose, _ = NewCompose(dockerHost, v1FilePath, projectName)
-	v2Compose, _ = NewCompose(dockerHost, v2FilePath, projectName)
-	v2ComposeBuildArg, _ = NewCompose(dockerHost, v2FilePathBuildArg, projectName)
-	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName)
+	v1Compose, _ = NewCompose(dockerHost, v1FilePath, projectName, registryDomain)
+	v2Compose, _ = NewCompose(dockerHost, v2FilePath, projectName, registryDomain)
+	v2ComposeBuildArg, _ = NewCompose(dockerHost, v2FilePathBuildArg, projectName, registryDomain)
+	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName, registryDomain)
 }
 
 func TestInjectBuildArgs(t *testing.T) {
