@@ -15,6 +15,7 @@ import (
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
@@ -138,10 +139,29 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 
 func (c *Compose) Push(images []*Image) error {
 	var (
-		opts docker.PushImageOptions
+		opts     docker.PushImageOptions
+		authConf docker.AuthConfiguration
 	)
 
 	client, _ := docker.NewClient(c.dockerHost)
+
+	accountID, err := service.GetAWSAccountID()
+	if err != nil {
+		return err
+	}
+
+	// default registry ID is equivalent to AWS account ID
+	token, err := service.GetECRToken(accountID)
+	if err != nil {
+		return err
+	}
+
+	authConf = docker.AuthConfiguration{
+		Username:      "AWS",
+		Password:      token,
+		Email:         "",
+		ServerAddress: "",
+	}
 
 	for _, image := range images {
 		opts = docker.PushImageOptions{
@@ -150,7 +170,7 @@ func (c *Compose) Push(images []*Image) error {
 			Tag:      image.Tag,
 		}
 
-		if err := client.PushImage(opts, docker.AuthConfiguration{}); err != nil {
+		if err := client.PushImage(opts, authConf); err != nil {
 			return err
 		}
 	}
