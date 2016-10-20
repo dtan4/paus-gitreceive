@@ -56,29 +56,6 @@ func setup() {
 	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName, registryDomain)
 }
 
-func TestImageName(t *testing.T) {
-	var actual string
-
-	setup()
-
-	username := "dtan4"
-	appName := "paus"
-	serviceName := "web"
-	revision := "1234abcd"
-
-	expected := "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com/dtan4-paus-web:1234abcd"
-
-	actual = v1Compose.ImageName(username, appName, serviceName, revision)
-	if actual != expected {
-		t.Fatalf("Image name from v1 is wrong. expected: %s, actual: %s", expected, actual)
-	}
-
-	actual = v2Compose.ImageName(username, appName, serviceName, revision)
-	if actual != expected {
-		t.Fatalf("Image name from compose v2 is wrong. expected: %s, actual: %s", expected, actual)
-	}
-}
-
 func TestInjectBuildArgs(t *testing.T) {
 	var (
 		buildArgs map[string]string
