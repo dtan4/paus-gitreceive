@@ -1,9 +1,13 @@
 package service
 
 import (
+	"encoding/base64"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/fsouza/go-dockerclient"
 )
 
 // CreateRepository creates new Repository
@@ -21,8 +25,8 @@ func CreateRepository(registryID, repository string) error {
 	return nil
 }
 
-// GetECRToken returns ECR authrization token
-func GetECRToken(registryID string) (string, error) {
+// GetECRAuthConf returns ECR authrization configuration
+func GetECRAuthConf(registryID string) (docker.AuthConfiguration, error) {
 	svc := ecr.New(session.New(), &aws.Config{})
 
 	resp, err := svc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{
@@ -31,10 +35,20 @@ func GetECRToken(registryID string) (string, error) {
 		},
 	})
 	if err != nil {
-		return "", err
+		return docker.AuthConfiguration{}, err
 	}
 
-	return *resp.AuthorizationData[0].AuthorizationToken, nil
+	username, token, err := extractToken(resp.AuthorizationData[0])
+	if err != nil {
+		return docker.AuthConfiguration{}, err
+	}
+
+	return docker.AuthConfiguration{
+		Username:      username,
+		Password:      token,
+		Email:         "",
+		ServerAddress: "",
+	}, nil
 }
 
 // GetRegistryDomain returns fully-qualified ECR registry domain
@@ -43,7 +57,7 @@ func GetRegistryDomain(accountID, region string) string {
 }
 
 // RepositoryExists returns whether the specified repository exists or not
-func RepositoryExists(registryID, repository string) (bool, error) {
+func RepositoryExists(registryID, repository string) bool {
 	svc := ecr.New(session.New(), &aws.Config{})
 
 	resp, err := svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{
@@ -53,12 +67,19 @@ func RepositoryExists(registryID, repository string) (bool, error) {
 	})
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	if len(resp.Repositories) == 0 {
-		return false, nil
+	return len(resp.Repositories) > 0
+}
+
+func extractToken(authData *ecr.AuthorizationData) (string, string, error) {
+	decodedToken, err := base64.StdEncoding.DecodeString(aws.StringValue(authData.AuthorizationToken))
+	if err != nil {
+		return "", "", err
 	}
 
-	return true, nil
+	parts := strings.SplitN(string(decodedToken), ":", 2)
+
+	return parts[0], parts[1], nil
 }

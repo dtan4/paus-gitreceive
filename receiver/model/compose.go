@@ -146,8 +146,7 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 
 func (c *Compose) Push(images []*Image) error {
 	var (
-		opts     docker.PushImageOptions
-		authConf docker.AuthConfiguration
+		opts docker.PushImageOptions
 	)
 
 	client, _ := docker.NewClient(c.dockerHost)
@@ -158,28 +157,30 @@ func (c *Compose) Push(images []*Image) error {
 	}
 
 	// default registry ID is equivalent to AWS account ID
-	token, err := service.GetECRToken(accountID)
+	authConf, err := service.GetECRAuthConf(accountID)
 	if err != nil {
 		return err
 	}
 
-	authConf = docker.AuthConfiguration{
-		Username:      "AWS",
-		Password:      token,
-		Email:         "",
-		ServerAddress: "",
-	}
-
 	for _, image := range images {
+		fmt.Println(image)
+		if !service.RepositoryExists(image.Registry, image.Name) {
+			if err := service.CreateRepository(image.Registry, image.Name); err != nil {
+				return err
+			}
+		}
+
 		opts = docker.PushImageOptions{
 			Registry: image.Registry,
-			Name:     image.Name,
+			Name:     image.Registry + "/" + image.Name,
 			Tag:      image.Tag,
 		}
 
 		if err := client.PushImage(opts, authConf); err != nil {
 			return err
 		}
+
+		fmt.Println("pushed!")
 	}
 
 	return nil
