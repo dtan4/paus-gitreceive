@@ -15,6 +15,7 @@ import (
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/fsouza/go-dockerclient"
@@ -98,7 +99,7 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 		sc := bufio.NewScanner(reader)
 
 		for sc.Scan() {
-			fmt.Println("      " + sc.Text())
+			msg.Println(sc.Text())
 		}
 	}()
 
@@ -167,7 +168,6 @@ func (c *Compose) Push(images []*Image) error {
 	}
 
 	for _, image := range images {
-		fmt.Println(image)
 		if !service.RepositoryExists(image.Registry, image.Name) {
 			if err := service.CreateRepository(image.Registry, image.Name); err != nil {
 				return err
@@ -183,8 +183,6 @@ func (c *Compose) Push(images []*Image) error {
 		if err := client.PushImage(opts, authConf); err != nil {
 			return err
 		}
-
-		fmt.Println("pushed!")
 	}
 
 	return nil

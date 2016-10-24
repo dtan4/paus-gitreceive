@@ -7,6 +7,7 @@ import (
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
@@ -74,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("=====> Getting submodules ...")
+	msg.Println("=====> Getting submodules ...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -88,7 +89,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("=====> docker-compose.yml was found")
+	msg.Println("=====> docker-compose.yml was found")
 
 	if err := rotateDeployments(etcd, application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -114,7 +115,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("=====> Application container is launched.")
+	msg.Println("=====> Application container is launched.")
 
 	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
 
@@ -131,10 +132,10 @@ func main() {
 	}
 
 	callback := func(path string, try int) {
-		fmt.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
+		msg.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
 	}
 
-	fmt.Println("=====> Start healthcheck ...")
+	msg.Println("=====> Start healthcheck ...")
 
 	if !webContainer.ExecuteHealthCheck(path, interval, maxTry, callback) {
 		fmt.Fprintln(os.Stderr, "=====> Web container is not active. Aborted.")
@@ -142,7 +143,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("=====> Registering metadata ...")
+	msg.Println("=====> Registering metadata ...")
 
 	deployment.Timestamp = util.Timestamp()
 

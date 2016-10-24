@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/pkg/errors"
 )
 
@@ -21,7 +21,7 @@ func printLine(r io.Reader) {
 	sc := bufio.NewScanner(r)
 
 	for sc.Scan() {
-		fmt.Println("       " + sc.Text())
+		msg.Println(sc.Text())
 	}
 }
 
