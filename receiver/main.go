@@ -75,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.Println("=====> Getting submodules ...")
+	msg.PrintTitle("Getting submodules ...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -89,7 +89,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.Println("=====> docker-compose.yml was found")
+	msg.PrintTitle("docker-compose.yml was found")
 
 	if err := rotateDeployments(etcd, application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -115,7 +115,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.Println("=====> Application container is launched.")
+	msg.PrintTitle("Application container is launched.")
 
 	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
 
@@ -135,7 +135,7 @@ func main() {
 		msg.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
 	}
 
-	msg.Println("=====> Start healthcheck ...")
+	msg.PrintTitle("Start healthcheck ...")
 
 	if !webContainer.ExecuteHealthCheck(path, interval, maxTry, callback) {
 		fmt.Fprintln(os.Stderr, "=====> Web container is not active. Aborted.")
@@ -143,7 +143,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.Println("=====> Registering metadata ...")
+	msg.PrintTitle("Registering metadata ...")
 
 	deployment.Timestamp = util.Timestamp()
 

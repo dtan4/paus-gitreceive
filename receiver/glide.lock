@@ -1,8 +1,8 @@
-hash: ad8d33899fbfc02036b13781ca5cdca5d4e0f0c27d25c14c6da88193bfa67ad0
-updated: 2016-10-20T20:33:30.012239094+09:00
+hash: 1dbb9e197589d788de728d70daf1e5bc8d0e16110559b4b159356c7b96cb7e31
+updated: 2016-10-24T20:04:41.224275603+09:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 1a651d9028d1203f4a0ba9fee91b207536cd4ca2
+  version: 32cdc88aa5cd2ba4afa049da884aaf9a3d103ef4
   subpackages:
   - aws
   - aws/awserr
@@ -83,6 +83,8 @@ imports:
   - project/options
   - utils
   - yaml
+- name: github.com/fatih/color
+  version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
