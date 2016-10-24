@@ -47,6 +47,8 @@ type ComposeConfig struct {
 }
 
 func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Compose, error) {
+	var registryDomain string
+
 	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
@@ -65,12 +67,14 @@ func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Co
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
 	}
 
-	accountID, err := service.GetAWSAccountID()
-	if err != nil {
-		return nil, err
-	}
+	if awsRegion != "" {
+		accountID, err := service.GetAWSAccountID()
+		if err != nil {
+			return nil, err
+		}
 
-	registryDomain := service.GetRegistryDomain(accountID, awsRegion)
+		registryDomain = service.GetRegistryDomain(accountID, awsRegion)
+	}
 
 	return &Compose{
 		ComposeFilePath: composeFilePath,
