@@ -29,7 +29,8 @@ COPY files/sshd_config /etc/ssh/
 
 RUN gitreceive init
 RUN echo "git:passwd" | chpasswd
-COPY receiver/bin/receiver_linux-amd64 /home/git/receiver
+COPY files/receiver-wrapper.sh /home/git/receiver
+COPY receiver/bin/receiver_linux-amd64 /usr/local/bin/receiver
 
 COPY files/get-submodules /usr/local/bin/
 COPY files/upload-key /usr/local/bin/

@@ -8,6 +8,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
       - PAUS_BASE_DOMAIN=pausapp.com
       - PAUS_DOCKER_HOST=unix:///var/run/docker.sock
       - PAUS_ETCD_ENDPOINT=http://etcd:2379
