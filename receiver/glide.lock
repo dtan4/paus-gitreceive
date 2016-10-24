@@ -1,5 +1,5 @@
 hash: 1dbb9e197589d788de728d70daf1e5bc8d0e16110559b4b159356c7b96cb7e31
-updated: 2016-10-24T20:04:41.224275603+09:00
+updated: 2016-10-24T21:04:47.31317887+09:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 32cdc88aa5cd2ba4afa049da884aaf9a3d103ef4
@@ -97,6 +97,10 @@ imports:
   version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
 - name: github.com/kelseyhightower/envconfig
   version: 3ef4de09ad56571e5d8b3cfdcd31941c0c5e3db9
+- name: github.com/mattn/go-colorable
+  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/opencontainers/runc
   version: 91ff092487fd45d0bcafc96d18d053cc242875a1
   subpackages:
