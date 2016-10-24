@@ -21,3 +21,5 @@ import:
   - aws/session
   - service/ecr
   - service/sts
+- package: github.com/fatih/color
+  version: ~1.1.0

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
+	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
@@ -14,7 +14,7 @@ import (
 func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment) (string, error) {
 	var err error
 
-	fmt.Println("=====> Building ...")
+	msg.PrintTitle("Building ...")
 
 	images, err := compose.Build(deployment)
 
@@ -22,19 +22,19 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 		return "", err
 	}
 
-	fmt.Println("=====> Pushing ...")
+	msg.PrintTitle("Pushing ...")
 
 	if err = compose.Push(images); err != nil {
 		return "", err
 	}
 
-	fmt.Println("=====> Pulling ...")
+	msg.PrintTitle("Pulling ...")
 
 	if err = compose.Pull(); err != nil {
 		return "", err
 	}
 
-	fmt.Println("=====> Deploying ...")
+	msg.PrintTitle("Deploying ...")
 
 	if err = compose.Up(); err != nil {
 		return "", err
@@ -94,11 +94,11 @@ func prepareComposeFile(application *model.Application, deployment *model.Deploy
 func printDeployedURLs(repository string, config *config.Config, identifiers []string) {
 	var url string
 
-	fmt.Println("=====> " + repository + " was successfully deployed at:")
+	msg.PrintTitle(repository + " was successfully deployed at:")
 
 	for _, identifier := range identifiers {
 		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
-		fmt.Println("         " + url)
+		msg.Println("         " + url)
 	}
 }
 
@@ -113,12 +113,12 @@ func rotateDeployments(etcd *store.Etcd, application *model.Application, maxAppD
 		return nil
 	}
 
-	fmt.Println("=====> Max deploy limit reached.")
+	msg.PrintTitle("Max deploy limit reached.")
 
 	oldestTimestamp := util.SortKeys(deployments)[0]
 	oldestDeployment := model.NewDeployment(application, "", deployments[oldestTimestamp], oldestTimestamp, repositoryDir)
 
-	fmt.Println("=====> Stop " + oldestDeployment.Revision + " ...")
+	msg.PrintTitle("Stop " + oldestDeployment.Revision + " ...")
 
 	// TODO: set registryDomain
 	compose, err := model.NewCompose(dockerHost, oldestDeployment.ComposeFilePath, oldestDeployment.ProjectName, "")
