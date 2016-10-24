@@ -3,7 +3,9 @@ package model
 // TODO: Use github.com/docker/libcompose
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,7 +15,9 @@ import (
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -29,6 +33,7 @@ var (
 type Compose struct {
 	ComposeFilePath string
 	ProjectName     string
+	RegistryDomain  string
 
 	dockerHost string
 	project    *project.Project
@@ -41,7 +46,9 @@ type ComposeConfig struct {
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
 }
 
-func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
+func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Compose, error) {
+	var registryDomain string
+
 	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
@@ -60,20 +67,124 @@ func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, erro
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
 	}
 
+	if awsRegion != "" {
+		accountID, err := service.GetAWSAccountID()
+		if err != nil {
+			return nil, err
+		}
+
+		registryDomain = service.GetRegistryDomain(accountID, awsRegion)
+	}
+
 	return &Compose{
 		ComposeFilePath: composeFilePath,
 		ProjectName:     projectName,
+		RegistryDomain:  registryDomain,
 		dockerHost:      dockerHost,
 		project:         prj,
 	}, nil
 }
 
-func (c *Compose) Build() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "build")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
+func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
+	var (
+		buildArgs []docker.BuildArg
+		opts      docker.BuildImageOptions
+		svc       *config.ServiceConfig
+		image     *Image
+	)
 
-	if err := util.RunCommand(cmd); err != nil {
+	reader, outputBuf := io.Pipe()
+	go func() {
+		sc := bufio.NewScanner(reader)
+
+		for sc.Scan() {
+			fmt.Println("      " + sc.Text())
+		}
+	}()
+
+	client, _ := docker.NewClient(c.dockerHost)
+	images := []*Image{}
+
+	for _, name := range c.project.ServiceConfigs.Keys() {
+		svc, _ = c.project.ServiceConfigs.Get(name)
+
+		if svc.Build.Context == "" {
+			continue
+		}
+
+		for k, v := range svc.Build.Args {
+			buildArgs = append(buildArgs, docker.BuildArg{Name: k, Value: v})
+		}
+
+		if svc.Image == "" {
+			n := deployment.App.Username + "-" + deployment.App.AppName + "-" + name
+			image = NewImage(c.RegistryDomain, n, deployment.Revision)
+		} else {
+			var err error
+
+			image, err = ImageFromString(svc.Image)
+			if err != nil {
+				return []*Image{}, err
+			}
+		}
+
+		opts = docker.BuildImageOptions{
+			BuildArgs:      buildArgs,
+			ContextDir:     svc.Build.Context,
+			Dockerfile:     svc.Build.Dockerfile,
+			Name:           image.String(),
+			OutputStream:   outputBuf,
+			Pull:           true,
+			SuppressOutput: false,
+		}
+
+		if err := client.BuildImage(opts); err != nil {
+			return []*Image{}, errors.Wrapf(err, "Failed to build image. service: %s", name)
+		}
+
+		images = append(images, image)
+	}
+
+	return images, nil
+}
+
+func (c *Compose) Push(images []*Image) error {
+	var (
+		opts docker.PushImageOptions
+	)
+
+	client, _ := docker.NewClient(c.dockerHost)
+
+	accountID, err := service.GetAWSAccountID()
+	if err != nil {
 		return err
+	}
+
+	// default registry ID is equivalent to AWS account ID
+	authConf, err := service.GetECRAuthConf(accountID)
+	if err != nil {
+		return err
+	}
+
+	for _, image := range images {
+		fmt.Println(image)
+		if !service.RepositoryExists(image.Registry, image.Name) {
+			if err := service.CreateRepository(image.Registry, image.Name); err != nil {
+				return err
+			}
+		}
+
+		opts = docker.PushImageOptions{
+			Registry: image.Registry,
+			Name:     image.Registry + "/" + image.Name,
+			Tag:      image.Tag,
+		}
+
+		if err := client.PushImage(opts, authConf); err != nil {
+			return err
+		}
+
+		fmt.Println("pushed!")
 	}
 
 	return nil

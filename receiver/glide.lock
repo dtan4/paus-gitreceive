@@ -1,6 +1,34 @@
-hash: e2456ed949d2385f72ac010fc14d83e04d4502ad6240c80279bf26d131d6b746
-updated: 2016-10-20T14:21:42.393162371+09:00
+hash: ad8d33899fbfc02036b13781ca5cdca5d4e0f0c27d25c14c6da88193bfa67ad0
+updated: 2016-10-20T20:33:30.012239094+09:00
 imports:
+- name: github.com/aws/aws-sdk-go
+  version: 1a651d9028d1203f4a0ba9fee91b207536cd4ca2
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/endpoints
+  - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/xml/xmlutil
+  - service/ecr
+  - service/sts
 - name: github.com/coreos/etcd
   version: c33ea20fefe0f435374258ca201cd5fc5edd0ab3
   subpackages:
@@ -59,8 +87,12 @@ imports:
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
   version: a53ba79627e888ef775bdcf15813f07d7a232867
+- name: github.com/go-ini/ini
+  version: cf53f9204df4fbdd7ec4164b57fa6184ba168292
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/jmespath/go-jmespath
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
 - name: github.com/kelseyhightower/envconfig
   version: 3ef4de09ad56571e5d8b3cfdcd31941c0c5e3db9
 - name: github.com/opencontainers/runc
