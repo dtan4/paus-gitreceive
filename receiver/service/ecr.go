@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 )
 
+// CreateRepository creates new Repository
 func CreateRepository(registryID, repository string) error {
 	svc := ecr.New(session.New(), &aws.Config{})
 
@@ -20,6 +21,7 @@ func CreateRepository(registryID, repository string) error {
 	return nil
 }
 
+// GetECRToken returns ECR authrization token
 func GetECRToken(registryID string) (string, error) {
 	svc := ecr.New(session.New(), &aws.Config{})
 
@@ -35,6 +37,12 @@ func GetECRToken(registryID string) (string, error) {
 	return *resp.AuthorizationData[0].AuthorizationToken, nil
 }
 
+// GetRegistryDomain returns fully-qualified ECR registry domain
+func GetRegistryDomain(accountID, region string) string {
+	return accountID + ".dkr.ecr." + region + ".amazonaws.com"
+}
+
+// RepositoryExists returns whether the specified repository exists or not
 func RepositoryExists(registryID, repository string) (bool, error) {
 	svc := ecr.New(session.New(), &aws.Config{})
 

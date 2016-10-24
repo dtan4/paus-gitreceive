@@ -95,7 +95,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.RegistryDomain)
+	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.AWSRegion)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

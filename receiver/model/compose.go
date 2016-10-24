@@ -46,7 +46,7 @@ type ComposeConfig struct {
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
 }
 
-func NewCompose(dockerHost, composeFilePath, projectName, registryDomain string) (*Compose, error) {
+func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Compose, error) {
 	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
@@ -64,6 +64,13 @@ func NewCompose(dockerHost, composeFilePath, projectName, registryDomain string)
 	if err := prj.Parse(); err != nil {
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
 	}
+
+	accountID, err := service.GetAWSAccountID()
+	if err != nil {
+		return nil, err
+	}
+
+	registryDomain := service.GetRegistryDomain(accountID, awsRegion)
 
 	return &Compose{
 		ComposeFilePath: composeFilePath,

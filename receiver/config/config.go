@@ -22,20 +22,19 @@ var (
 		"DockerHost",
 		"EtcdEndpoint",
 		"MaxAppDeploy",
-		"RegistryDomain",
 		"RepositoryDir",
 		"URIScheme",
 	}
 )
 
 type Config struct {
-	BaseDomain     string `envconfig:"base_domain"`
-	DockerHost     string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
-	EtcdEndpoint   string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
-	MaxAppDeploy   int64  `envconfig:"max_app_deploy" default:"10"`
-	RegistryDomain string `envconfig:"registry_domain" default:""`
-	RepositoryDir  string `envconfig:"repository_dir" default:"/repos"`
-	URIScheme      string `envconfig:"uri_scheme"     default:"http"`
+	AWSRegion     string
+	BaseDomain    string `envconfig:"base_domain"`
+	DockerHost    string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
+	EtcdEndpoint  string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
+	MaxAppDeploy  int64  `envconfig:"max_app_deploy" default:"10"`
+	RepositoryDir string `envconfig:"repository_dir" default:"/repos"`
+	URIScheme     string `envconfig:"uri_scheme"     default:"http"`
 }
 
 func loadConfigFromFile(filePath string) (map[string]string, error) {
@@ -98,6 +97,8 @@ func LoadConfig() (*Config, error) {
 			reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
 		}
 	}
+
+	config.AWSRegion = os.Getenv("AWS_REGION")
 
 	return &config, nil
 }
