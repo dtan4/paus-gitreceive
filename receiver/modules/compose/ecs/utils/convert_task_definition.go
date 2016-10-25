@@ -52,10 +52,17 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 
 	// volumes from
 	volumesFrom, err := convertToVolumesFrom(svc.VolumesFrom)
+	if err != nil {
+		return nil, err
+	}
 
 	// mount points
 
 	// extra hosts
+	extraHosts, err := convertToExtraHosts(svc.ExtraHosts)
+	if err != nil {
+		return nil, err
+	}
 
 	// logs
 
@@ -67,6 +74,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 		Name:         aws.String(name),
 		PortMappings: portMappings,
 		VolumesFrom:  volumesFrom,
+		ExtraHosts:   extraHosts,
 	}, nil
 }
 
@@ -165,4 +173,22 @@ func convertToVolumesFrom(cfgVolumesFrom []string) ([]*ecs.VolumeFrom, error) {
 		})
 	}
 	return volumesFrom, nil
+}
+
+func convertToExtraHosts(cfgExtraHosts []string) ([]*ecs.HostEntry, error) {
+	extraHosts := []*ecs.HostEntry{}
+	for _, cfgExtraHost := range cfgExtraHosts {
+		parts := strings.Split(cfgExtraHost, ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf(
+				"expected format HOSTNAME:IPADDRESS. could not parse ExtraHost: %s", cfgExtraHost)
+		}
+		extraHost := &ecs.HostEntry{
+			Hostname:  aws.String(parts[0]),
+			IpAddress: aws.String(parts[1]),
+		}
+		extraHosts = append(extraHosts, extraHost)
+	}
+
+	return extraHosts, nil
 }
