@@ -12,6 +12,9 @@ import (
 )
 
 const (
+	defaultMemLimit = 512
+	kiB             = 1024
+
 	readOnlyVolumeAccessMode  = "ro"
 	readWriteVolumeAccessMode = "rw"
 	volumeFromContainerKey    = "container"
@@ -41,6 +44,13 @@ func ConvertToTaskDefinition(prj *project.Project) (*ecs.TaskDefinition, error) 
 
 func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.ContainerDefinition, error) {
 	// memory
+	var mem int64
+	if svc.MemLimit != 0 {
+		mem = int64(svc.MemLimit) / kiB / kiB // convert bytes to MiB
+	}
+	if mem == 0 {
+		mem = defaultMemLimit
+	}
 
 	// environment variables
 
@@ -79,6 +89,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 
 	return &ecs.ContainerDefinition{
 		Name:             aws.String(name),
+		Memory:           aws.Int64(mem),
 		PortMappings:     portMappings,
 		VolumesFrom:      volumesFrom,
 		ExtraHosts:       extraHosts,
