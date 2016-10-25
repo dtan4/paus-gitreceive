@@ -65,16 +65,24 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	}
 
 	// logs
+	var logConfig *ecs.LogConfiguration
+	if svc.Logging.Driver != "" {
+		logConfig = &ecs.LogConfiguration{
+			LogDriver: aws.String(svc.Logging.Driver),
+			Options:   aws.StringMap(svc.Logging.Options),
+		}
+	}
 
 	// ulimits
 
 	// popular container definition
 
 	return &ecs.ContainerDefinition{
-		Name:         aws.String(name),
-		PortMappings: portMappings,
-		VolumesFrom:  volumesFrom,
-		ExtraHosts:   extraHosts,
+		Name:             aws.String(name),
+		PortMappings:     portMappings,
+		VolumesFrom:      volumesFrom,
+		ExtraHosts:       extraHosts,
+		LogConfiguration: logConfig,
 	}, nil
 }
 
