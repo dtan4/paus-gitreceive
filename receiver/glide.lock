@@ -1,5 +1,5 @@
-hash: 1dbb9e197589d788de728d70daf1e5bc8d0e16110559b4b159356c7b96cb7e31
-updated: 2016-10-24T21:04:47.31317887+09:00
+hash: 68e9dd2aca3d2c66225c9393f20b678fe002e4baa8607ffe01c24843091669b1
+updated: 2016-10-25T17:05:16.328309816+09:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 32cdc88aa5cd2ba4afa049da884aaf9a3d103ef4
@@ -27,7 +27,9 @@ imports:
   - private/protocol/query/queryutil
   - private/protocol/rest
   - private/protocol/xml/xmlutil
+  - private/waiter
   - service/ecr
+  - service/ecs
   - service/sts
 - name: github.com/coreos/etcd
   version: c33ea20fefe0f435374258ca201cd5fc5edd0ab3
