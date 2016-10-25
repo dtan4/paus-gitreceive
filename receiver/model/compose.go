@@ -151,52 +151,6 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 	return images, nil
 }
 
-func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.ContainerDefinition, error) {
-	containerDef := &ecs.ContainerDefinition{
-		Name: aws.String(name),
-	}
-
-	// memory
-
-	// environment variables
-
-	// volumes from
-
-	// mount points
-
-	// extra hosts
-
-	// logs
-
-	// ulimits
-
-	// popular container definition
-
-	return containerDef, nil
-}
-
-// ConvertToTaskDefinition converts docker-compose.yml to ECS TaskDefinition
-func (c *Compose) ConvertToTaskDefinition() (*ecs.TaskDefinition, error) {
-	containerDefinitions := []*ecs.ContainerDefinition{}
-
-	for _, name := range c.project.ServiceConfigs.Keys() {
-		svc, _ := c.project.ServiceConfigs.Get(name)
-
-		containerDef, err := convertToContainerDef(name, svc)
-		if err != nil {
-			return nil, err
-		}
-
-		containerDefinitions = append(containerDefinitions, containerDef)
-	}
-
-	taskDefinition := &ecs.TaskDefinition{
-		ContainerDefinitions: containerDefinitions,
-	}
-
-	return taskDefinition, nil
-}
-
 func (c *Compose) Push(images []*Image) error {
 	var (
 		opts docker.PushImageOptions
