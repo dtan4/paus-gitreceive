@@ -1,3 +1,8 @@
+// This file convert_task_definition.go is derived from amazon-ecs-cli project, Copyright 2015-2016 Amazon.com.
+// The original code may be found:
+// https://github.com/aws/amazon-ecs-cli/blob/204c9687175f651a981f88ab188fbb68f87240b4/ecs-cli/modules/compose/ecs/utils/convert_task_definition.go
+// https://github.com/aws/amazon-ecs-cli/blob/204c9687175f651a981f88ab188fbb68f87240b4/ecs-cli/modules/compose/ecs/utils/name.go
+
 package utils
 
 import (
