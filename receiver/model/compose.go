@@ -12,9 +12,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
@@ -312,6 +314,17 @@ func (c *Compose) SaveAs(filePath string) error {
 	c.ComposeFilePath = filePath
 
 	return nil
+}
+
+// TransformToTaskDefinition converts the compose yml into ECS TaskDefinition
+func (c *Compose) TransformToTaskDefinition() (*ecs.TaskDefinition, error) {
+	taskDefinitionName := ""
+	taskDefinition, err := utils.ConvertToTaskDefinition(taskDefinitionName, c.context, c.project)
+	if err != nil {
+		return nil, err
+	}
+
+	return taskDefinition, nil
 }
 
 func (c *Compose) Stop() error {
