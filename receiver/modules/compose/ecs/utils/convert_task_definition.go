@@ -11,6 +11,12 @@ import (
 	"github.com/docker/libcompose/project"
 )
 
+const (
+	readOnlyVolumeAccessMode  = "ro"
+	readWriteVolumeAccessMode = "rw"
+	volumeFromContainerKey    = "container"
+)
+
 // ConvertToTaskDefinition converts docker-compose.yml to ECS TaskDefinition
 func ConvertToTaskDefinition(prj *project.Project) (*ecs.TaskDefinition, error) {
 	containerDefinitions := []*ecs.ContainerDefinition{}
@@ -45,6 +51,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	}
 
 	// volumes from
+	volumesFrom, err := convertToVolumesFrom(svc.VolumesFrom)
 
 	// mount points
 
@@ -59,6 +66,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	return &ecs.ContainerDefinition{
 		Name:         aws.String(name),
 		PortMappings: portMappings,
+		VolumesFrom:  volumesFrom,
 	}, nil
 }
 
@@ -103,4 +111,58 @@ func convertToPortMappings(ports []string) ([]*ecs.PortMapping, error) {
 	}
 
 	return portMappings, nil
+}
+
+func convertToVolumesFrom(cfgVolumesFrom []string) ([]*ecs.VolumeFrom, error) {
+	volumesFrom := []*ecs.VolumeFrom{}
+
+	for _, cfgVolumeFrom := range cfgVolumesFrom {
+		parts := strings.Split(cfgVolumeFrom, ":")
+
+		var containerName, accessModeStr string
+
+		parseErr := fmt.Errorf(
+			"expected format [container:]SERVICE|CONTAINER[:ro|rw]. could not parse cfgVolumeFrom: %s", cfgVolumeFrom)
+
+		switch len(parts) {
+		// for the following volumes_from formats (supported by compose file formats v1 and v2),
+		// name: refers to either service_name or container_name
+		// container: is a keyword thats introduced in v2 to differentiate between service_name and container:container_name
+		// ro|rw: read-only or read-write access
+		case 1: // Format: name
+			containerName = parts[0]
+		case 2: // Format: name:ro|rw (OR) container:name
+			if parts[0] == volumeFromContainerKey {
+				containerName = parts[1]
+			} else {
+				containerName = parts[0]
+				accessModeStr = parts[1]
+			}
+		case 3: // Format: container:name:ro|rw
+			if parts[0] != volumeFromContainerKey {
+				return nil, parseErr
+			}
+			containerName = parts[1]
+			accessModeStr = parts[2]
+		default:
+			return nil, parseErr
+		}
+
+		// parse accessModeStr
+		var readOnly bool
+		if accessModeStr != "" {
+			if accessModeStr == readOnlyVolumeAccessMode {
+				readOnly = true
+			} else if accessModeStr == readWriteVolumeAccessMode {
+				readOnly = false
+			} else {
+				return nil, fmt.Errorf("Could not parse access mode %s", accessModeStr)
+			}
+		}
+		volumesFrom = append(volumesFrom, &ecs.VolumeFrom{
+			SourceContainer: aws.String(containerName),
+			ReadOnly:        aws.Bool(readOnly),
+		})
+	}
+	return volumesFrom, nil
 }
