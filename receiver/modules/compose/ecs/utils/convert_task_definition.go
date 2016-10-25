@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project"
+	"github.com/docker/libcompose/yaml"
 )
 
 const (
@@ -84,6 +85,10 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	}
 
 	// ulimits
+	ulimits, err := convertToULimits(svc.Ulimits)
+	if err != nil {
+		return nil, err
+	}
 
 	// popular container definition
 
@@ -94,6 +99,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 		VolumesFrom:      volumesFrom,
 		ExtraHosts:       extraHosts,
 		LogConfiguration: logConfig,
+		Ulimits:          ulimits,
 	}, nil
 }
 
@@ -210,4 +216,18 @@ func convertToExtraHosts(cfgExtraHosts []string) ([]*ecs.HostEntry, error) {
 	}
 
 	return extraHosts, nil
+}
+
+func convertToULimits(cfgUlimits yaml.Ulimits) ([]*ecs.Ulimit, error) {
+	ulimits := []*ecs.Ulimit{}
+	for _, cfgUlimit := range cfgUlimits.Elements {
+		ulimit := &ecs.Ulimit{
+			Name:      aws.String(cfgUlimit.Name),
+			SoftLimit: aws.Int64(cfgUlimit.Soft),
+			HardLimit: aws.Int64(cfgUlimit.Hard),
+		}
+		ulimits = append(ulimits, ulimit)
+	}
+
+	return ulimits, nil
 }
