@@ -19,16 +19,19 @@ const (
 	readOnlyVolumeAccessMode  = "ro"
 	readWriteVolumeAccessMode = "rw"
 	volumeFromContainerKey    = "container"
+
+	ecsVolumeNamePrefix = "volume"
 )
 
 // ConvertToTaskDefinition converts docker-compose.yml to ECS TaskDefinition
-func ConvertToTaskDefinition(context *project.Context, prj *project.Project) (*ecs.TaskDefinition, error) {
+func ConvertToTaskDefinition(taskDefinitionName string, context *project.Context, prj *project.Project) (*ecs.TaskDefinition, error) {
 	containerDefinitions := []*ecs.ContainerDefinition{}
+	volumes := make(map[string]string)
 
 	for _, name := range prj.ServiceConfigs.Keys() {
 		svc, _ := prj.ServiceConfigs.Get(name)
 
-		containerDef, err := convertToContainerDef(name, context, svc)
+		containerDef, err := convertToContainerDef(name, context, svc, volumes)
 		if err != nil {
 			return nil, err
 		}
@@ -37,13 +40,15 @@ func ConvertToTaskDefinition(context *project.Context, prj *project.Project) (*e
 	}
 
 	taskDefinition := &ecs.TaskDefinition{
+		Family:               aws.String(taskDefinitionName),
 		ContainerDefinitions: containerDefinitions,
+		Volumes:              convertToECSVolumes(volumes),
 	}
 
 	return taskDefinition, nil
 }
 
-func convertToContainerDef(name string, context *project.Context, svc *config.ServiceConfig) (*ecs.ContainerDefinition, error) {
+func convertToContainerDef(name string, context *project.Context, svc *config.ServiceConfig, volumes map[string]string) (*ecs.ContainerDefinition, error) {
 	// memory
 	var mem int64
 	if svc.MemLimit != 0 {
@@ -69,6 +74,10 @@ func convertToContainerDef(name string, context *project.Context, svc *config.Se
 	}
 
 	// mount points
+	mountPoints, err := convertToMountPoints(svc.Volumes, volumes)
+	if err != nil {
+		return nil, err
+	}
 
 	// extra hosts
 	extraHosts, err := convertToExtraHosts(svc.ExtraHosts)
@@ -92,20 +101,20 @@ func convertToContainerDef(name string, context *project.Context, svc *config.Se
 	}
 
 	containerDefinition := &ecs.ContainerDefinition{
-		Cpu:                   aws.Int64(int64(svc.CPUShares)),
-		Command:               aws.StringSlice(svc.Command),
-		DnsSearchDomains:      aws.StringSlice(svc.DNSSearch),
-		DnsServers:            aws.StringSlice(svc.DNS),
-		DockerLabels:          aws.StringMap(svc.Labels),
-		DockerSecurityOptions: aws.StringSlice(svc.SecurityOpt),
-		EntryPoint:            aws.StringSlice(svc.Entrypoint),
-		Environment:           environment,
-		ExtraHosts:            extraHosts,
-		Image:                 aws.String(svc.Image),
-		Links:                 aws.StringSlice(svc.Links),
-		LogConfiguration:      logConfig,
-		Memory:                aws.Int64(mem),
-		// MountPoints
+		Cpu:                    aws.Int64(int64(svc.CPUShares)),
+		Command:                aws.StringSlice(svc.Command),
+		DnsSearchDomains:       aws.StringSlice(svc.DNSSearch),
+		DnsServers:             aws.StringSlice(svc.DNS),
+		DockerLabels:           aws.StringMap(svc.Labels),
+		DockerSecurityOptions:  aws.StringSlice(svc.SecurityOpt),
+		EntryPoint:             aws.StringSlice(svc.Entrypoint),
+		Environment:            environment,
+		ExtraHosts:             extraHosts,
+		Image:                  aws.String(svc.Image),
+		Links:                  aws.StringSlice(svc.Links),
+		LogConfiguration:       logConfig,
+		Memory:                 aws.Int64(mem),
+		MountPoints:            mountPoints,
 		Name:                   aws.String(name),
 		Privileged:             aws.Bool(svc.Privileged),
 		PortMappings:           portMappings,
@@ -163,6 +172,23 @@ func createKeyValuePair(key, value string) *ecs.KeyValuePair {
 		Name:  aws.String(key),
 		Value: aws.String(value),
 	}
+}
+
+func convertToECSVolumes(hostPaths map[string]string) []*ecs.Volume {
+	volumes := []*ecs.Volume{}
+
+	for hostPath, volName := range hostPaths {
+		ecsVolume := &ecs.Volume{
+			Name: aws.String(volName),
+			Host: &ecs.HostVolumeProperties{
+				SourcePath: aws.String(hostPath),
+			},
+		}
+
+		volumes = append(volumes, ecsVolume)
+	}
+
+	return volumes
 }
 
 func convertToPortMappings(ports []string) ([]*ecs.PortMapping, error) {
@@ -260,6 +286,55 @@ func convertToVolumesFrom(cfgVolumesFrom []string) ([]*ecs.VolumeFrom, error) {
 		})
 	}
 	return volumesFrom, nil
+}
+
+func convertToMountPoints(cfgVolumes *yaml.Volumes, volumes map[string]string) ([]*ecs.MountPoint, error) {
+	mountPoints := []*ecs.MountPoint{}
+	if cfgVolumes == nil {
+		return mountPoints, nil
+	}
+
+	for _, v := range cfgVolumes.Volumes {
+		hostPath := v.Source
+		containerPath := v.Destination
+
+		accessMode := v.AccessMode
+		var readOnly bool
+
+		if accessMode != "" {
+			if accessMode == readOnlyVolumeAccessMode {
+				readOnly = true
+			} else if accessMode == readWriteVolumeAccessMode {
+				readOnly = false
+			} else {
+				return nil, fmt.Errorf(
+					"expected format [HOST:]CONTAINER[:ro|rw]. could not parse volume: %s", v)
+			}
+		}
+
+		var volumeName string
+
+		if len(volumes) > 0 {
+			volumeName = volumes[hostPath]
+		}
+
+		if volumeName == "" {
+			volumeName = getVolumeName(len(volumes))
+			volumes[hostPath] = volumeName
+		}
+
+		mountPoints = append(mountPoints, &ecs.MountPoint{
+			ContainerPath: aws.String(containerPath),
+			SourceVolume:  aws.String(volumeName),
+			ReadOnly:      aws.Bool(readOnly),
+		})
+	}
+
+	return mountPoints, nil
+}
+
+func getVolumeName(suffixNum int) string {
+	return ecsVolumeNamePrefix + "-" + strconv.Itoa(suffixNum)
 }
 
 func convertToExtraHosts(cfgExtraHosts []string) ([]*ecs.HostEntry, error) {
