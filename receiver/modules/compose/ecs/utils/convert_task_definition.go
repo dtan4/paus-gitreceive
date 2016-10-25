@@ -90,17 +90,42 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 		return nil, err
 	}
 
-	// popular container definition
-
-	return &ecs.ContainerDefinition{
-		Name:             aws.String(name),
-		Memory:           aws.Int64(mem),
-		PortMappings:     portMappings,
-		VolumesFrom:      volumesFrom,
+	containerDefinition := &ecs.ContainerDefinition{
+		Cpu:                   aws.Int64(int64(svc.CPUShares)),
+		Command:               aws.StringSlice(svc.Command),
+		DnsSearchDomains:      aws.StringSlice(svc.DNSSearch),
+		DnsServers:            aws.StringSlice(svc.DNS),
+		DockerLabels:          aws.StringMap(svc.Labels),
+		DockerSecurityOptions: aws.StringSlice(svc.SecurityOpt),
+		EntryPoint:            aws.StringSlice(svc.Entrypoint),
+		// Environment
 		ExtraHosts:       extraHosts,
+		Image:            aws.String(svc.Image),
+		Links:            aws.StringSlice(svc.Links),
 		LogConfiguration: logConfig,
-		Ulimits:          ulimits,
-	}, nil
+		Memory:           aws.Int64(mem),
+		// MountPoints
+		Name:                   aws.String(name),
+		Privileged:             aws.Bool(svc.Privileged),
+		PortMappings:           portMappings,
+		ReadonlyRootFilesystem: aws.Bool(svc.ReadOnly),
+		Ulimits:                ulimits,
+		VolumesFrom:            volumesFrom,
+	}
+
+	if svc.Hostname != "" {
+		containerDefinition.Hostname = aws.String(svc.Hostname)
+	}
+
+	if svc.User != "" {
+		containerDefinition.User = aws.String(svc.User)
+	}
+
+	if svc.WorkingDir != "" {
+		containerDefinition.WorkingDirectory = aws.String(svc.WorkingDir)
+	}
+
+	return containerDefinition, nil
 }
 
 func convertToPortMappings(ports []string) ([]*ecs.PortMapping, error) {
