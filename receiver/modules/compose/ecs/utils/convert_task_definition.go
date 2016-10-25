@@ -22,13 +22,13 @@ const (
 )
 
 // ConvertToTaskDefinition converts docker-compose.yml to ECS TaskDefinition
-func ConvertToTaskDefinition(prj *project.Project) (*ecs.TaskDefinition, error) {
+func ConvertToTaskDefinition(context *project.Context, prj *project.Project) (*ecs.TaskDefinition, error) {
 	containerDefinitions := []*ecs.ContainerDefinition{}
 
 	for _, name := range prj.ServiceConfigs.Keys() {
 		svc, _ := prj.ServiceConfigs.Get(name)
 
-		containerDef, err := convertToContainerDef(name, svc)
+		containerDef, err := convertToContainerDef(name, context, svc)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func ConvertToTaskDefinition(prj *project.Project) (*ecs.TaskDefinition, error) 
 	return taskDefinition, nil
 }
 
-func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.ContainerDefinition, error) {
+func convertToContainerDef(name string, context *project.Context, svc *config.ServiceConfig) (*ecs.ContainerDefinition, error) {
 	// memory
 	var mem int64
 	if svc.MemLimit != 0 {
@@ -54,6 +54,7 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	}
 
 	// environment variables
+	environment := convertToKeyValuePairs(context, svc.Environment, name)
 
 	// port mappings
 	portMappings, err := convertToPortMappings(svc.Ports)
@@ -98,12 +99,12 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 		DockerLabels:          aws.StringMap(svc.Labels),
 		DockerSecurityOptions: aws.StringSlice(svc.SecurityOpt),
 		EntryPoint:            aws.StringSlice(svc.Entrypoint),
-		// Environment
-		ExtraHosts:       extraHosts,
-		Image:            aws.String(svc.Image),
-		Links:            aws.StringSlice(svc.Links),
-		LogConfiguration: logConfig,
-		Memory:           aws.Int64(mem),
+		Environment:           environment,
+		ExtraHosts:            extraHosts,
+		Image:                 aws.String(svc.Image),
+		Links:                 aws.StringSlice(svc.Links),
+		LogConfiguration:      logConfig,
+		Memory:                aws.Int64(mem),
 		// MountPoints
 		Name:                   aws.String(name),
 		Privileged:             aws.Bool(svc.Privileged),
@@ -126,6 +127,42 @@ func convertToContainerDef(name string, svc *config.ServiceConfig) (*ecs.Contain
 	}
 
 	return containerDefinition, nil
+}
+
+func convertToKeyValuePairs(context *project.Context, envVars yaml.MaporEqualSlice, svcName string) []*ecs.KeyValuePair {
+	environment := []*ecs.KeyValuePair{}
+
+	for _, env := range envVars {
+		parts := strings.SplitN(env, "=", 2)
+		key := parts[0]
+
+		if len(parts) > 1 && parts[1] != "" {
+			environment = append(environment, createKeyValuePair(key, parts[1]))
+			continue
+		}
+
+		if context.EnvironmentLookup != nil {
+			resolvedEnvVars := context.EnvironmentLookup.Lookup(key, svcName, nil)
+
+			if len(resolvedEnvVars) == 0 {
+				environment = append(environment, createKeyValuePair(key, ""))
+				continue
+			}
+
+			value := resolvedEnvVars[0]
+			lookupParts := strings.SplitN(value, "=", 2)
+			environment = append(environment, createKeyValuePair(key, lookupParts[1]))
+		}
+	}
+
+	return environment
+}
+
+func createKeyValuePair(key, value string) *ecs.KeyValuePair {
+	return &ecs.KeyValuePair{
+		Name:  aws.String(key),
+		Value: aws.String(value),
+	}
 }
 
 func convertToPortMappings(ports []string) ([]*ecs.PortMapping, error) {
