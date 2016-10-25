@@ -37,6 +37,7 @@ type Compose struct {
 	RegistryDomain  string
 
 	dockerHost string
+	context    *project.Context
 	project    *project.Project
 }
 
@@ -82,6 +83,7 @@ func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Co
 		ProjectName:     projectName,
 		RegistryDomain:  registryDomain,
 		dockerHost:      dockerHost,
+		context:         &ctx,
 		project:         prj,
 	}, nil
 }
