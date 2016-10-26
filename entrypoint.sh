@@ -30,6 +30,13 @@ else
   exit 1
 fi
 
+if [ -n "$PAUS_CLUSTER_NAME" ]; then
+  echo "export PAUS_CLUSTER_NAME=$PAUS_CLUSTER_NAME" >> /etc/profile.d/envs.sh
+else
+  echo "required key PAUS_CLUSTER_NAME missing value"
+  exit 1
+fi
+
 if [ -n "$PAUS_DOCKER_HOST" ]; then
   echo "export PAUS_DOCKER_HOST=$PAUS_DOCKER_HOST" >> /etc/profile.d/envs.sh
 fi

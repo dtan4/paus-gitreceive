@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -52,7 +51,7 @@ func main() {
 	}
 
 	if !application.DirExists() {
-		msg.PrintError("=====> Application not found: " + application.AppName)
+		msg.PrintError("Application not found: " + application.AppName)
 		os.Exit(1)
 	}
 
@@ -75,7 +74,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.PrintTitle("Getting submodules ...")
+	msg.PrintTitle("Getting submodules...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
 		msg.PrintErrorf("%+v\n", err)
@@ -108,42 +107,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose, deployment)
-
+	serviceAddress, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)
 		os.Exit(1)
 	}
 
-	msg.PrintTitle("Application container is launched.")
+	msg.PrintTitle("Application container is launched!")
 
-	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
-
-	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
-
-	path, interval, maxTry, err := application.HealthCheck()
-
-	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
-
-	callback := func(path string, try int) {
-		msg.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
-	}
-
-	msg.PrintTitle("Start healthcheck ...")
-
-	if !webContainer.ExecuteHealthCheck(path, interval, maxTry, callback) {
-		msg.PrintError("=====> Web container is not active. Aborted.")
-		compose.Stop()
-		os.Exit(1)
-	}
-
-	msg.PrintTitle("Registering metadata ...")
+	msg.PrintTitle("Registering metadata...")
 
 	deployment.Timestamp = util.Timestamp()
 
@@ -152,7 +124,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, serviceAddress)
 
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)

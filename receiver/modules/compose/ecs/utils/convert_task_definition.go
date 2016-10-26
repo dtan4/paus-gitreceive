@@ -29,14 +29,14 @@ const (
 )
 
 // ConvertToTaskDefinition converts docker-compose.yml to ECS TaskDefinition
-func ConvertToTaskDefinition(taskDefinitionName string, context *project.Context, prj *project.Project) (*ecs.TaskDefinition, error) {
+func ConvertToTaskDefinition(taskDefinitionName string, context *project.Context, prj *project.Project, serviceName, region string) (*ecs.TaskDefinition, error) {
 	containerDefinitions := []*ecs.ContainerDefinition{}
 	volumes := make(map[string]string)
 
 	for _, name := range prj.ServiceConfigs.Keys() {
 		svc, _ := prj.ServiceConfigs.Get(name)
 
-		containerDef, err := convertToContainerDef(name, context, svc, volumes)
+		containerDef, err := convertToContainerDef(name, context, svc, volumes, serviceName, region)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func ConvertToTaskDefinition(taskDefinitionName string, context *project.Context
 	return taskDefinition, nil
 }
 
-func convertToContainerDef(name string, context *project.Context, svc *config.ServiceConfig, volumes map[string]string) (*ecs.ContainerDefinition, error) {
+func convertToContainerDef(name string, context *project.Context, svc *config.ServiceConfig, volumes map[string]string, serviceName, region string) (*ecs.ContainerDefinition, error) {
 	// memory
 	var mem int64
 	if svc.MemLimit != 0 {
@@ -91,12 +91,12 @@ func convertToContainerDef(name string, context *project.Context, svc *config.Se
 	}
 
 	// logs
-	var logConfig *ecs.LogConfiguration
-	if svc.Logging.Driver != "" {
-		logConfig = &ecs.LogConfiguration{
-			LogDriver: aws.String(svc.Logging.Driver),
-			Options:   aws.StringMap(svc.Logging.Options),
-		}
+	logConfig := &ecs.LogConfiguration{
+		LogDriver: aws.String("awslogs"),
+		Options: aws.StringMap(map[string]string{
+			"awslogs-group":  serviceName,
+			"awslogs-region": region,
+		}),
 	}
 
 	// ulimits

@@ -194,8 +194,8 @@ func (c *Compose) Push(images map[string]*Image) error {
 	return nil
 }
 
-// ReplaceImages replaces image of service to the given one
-func (c *Compose) ReplaceImages(images map[string]*Image) {
+// UpdateImages replaces image of service to the given one
+func (c *Compose) UpdateImages(images map[string]*Image) {
 	for svcName, image := range images {
 		svc, _ := c.project.ServiceConfigs.Get(svcName)
 		svc.Image = image.String()
@@ -258,17 +258,6 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 	}
 }
 
-func (c *Compose) Pull() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "pull")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *Compose) RewritePortBindings() {
 	var newPorts []string
 
@@ -327,9 +316,8 @@ func (c *Compose) SaveAs(filePath string) error {
 }
 
 // TransformToTaskDefinition converts the compose yml into ECS TaskDefinition
-func (c *Compose) TransformToTaskDefinition() (*ecs.TaskDefinition, error) {
-	taskDefinitionName := ""
-	taskDefinition, err := utils.ConvertToTaskDefinition(taskDefinitionName, c.context, c.project)
+func (c *Compose) TransformToTaskDefinition(name, serviceName, region string) (*ecs.TaskDefinition, error) {
+	taskDefinition, err := utils.ConvertToTaskDefinition(name, c.context, c.project, serviceName, region)
 	if err != nil {
 		return nil, err
 	}
@@ -339,17 +327,6 @@ func (c *Compose) TransformToTaskDefinition() (*ecs.TaskDefinition, error) {
 
 func (c *Compose) Stop() error {
 	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "stop")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Compose) Up() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {
