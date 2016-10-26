@@ -56,7 +56,7 @@ func setup() {
 	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName, awsRegion)
 }
 
-func TestReplaceImages(t *testing.T) {
+func TestUpdateImages(t *testing.T) {
 	var (
 		images     map[string]*Image
 		webService *config.ServiceConfig
@@ -75,24 +75,24 @@ func TestReplaceImages(t *testing.T) {
 		},
 	}
 
-	v1Compose.ReplaceImages(images)
+	v1Compose.UpdateImages(images)
 
 	webService, _ = v1Compose.project.ServiceConfigs.Get("web")
 	expected = "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com/dtan4-web:0123abcd"
 	actual = webService.Image
 
 	if actual != expected {
-		t.Fatalf("Replaced image name is mismatched. expected: %#v, actual: %#v", expected, actual)
+		t.Fatalf("Updated image name is mismatched. expected: %#v, actual: %#v", expected, actual)
 	}
 
-	v2Compose.ReplaceImages(images)
+	v2Compose.UpdateImages(images)
 
 	webService, _ = v2Compose.project.ServiceConfigs.Get("web")
 	expected = "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com/dtan4-web:0123abcd"
 	actual = webService.Image
 
 	if actual != expected {
-		t.Fatalf("Replaced image name is mismatched. expected: %#v, actual: %#v", expected, actual)
+		t.Fatalf("Updated image name is mismatched. expected: %#v, actual: %#v", expected, actual)
 	}
 }
 
