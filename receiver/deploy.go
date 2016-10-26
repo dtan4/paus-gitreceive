@@ -35,7 +35,7 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Convert to TaskDefinition...")
 
-	taskDefinition, err := compose.TransformToTaskDefinition()
+	taskDefinition, err := compose.TransformToTaskDefinition(application.TaskDefinitionName())
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,7 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Creating service ...")
 
-	svc, err := service.CreateService("serviceName4", clusterName, *td.TaskDefinitionArn)
+	svc, err := service.CreateService(application.ServiceName(util.Timestamp()), clusterName, *td.TaskDefinitionArn)
 	if err != nil {
 		return "", err
 	}

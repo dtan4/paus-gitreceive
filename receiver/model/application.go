@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
@@ -203,4 +204,14 @@ func (app *Application) RegisterMetadata(revision, timestamp string) error {
 	}
 
 	return nil
+}
+
+// TaskDefinitionName returns the name of TaskDefinition
+func (app *Application) TaskDefinitionName() string {
+	return utils.GetTaskDefinitionName(app.Username + "-" + app.AppName)
+}
+
+// ServiceName returns the name of Service with given suffix
+func (app *Application) ServiceName(suffix string) string {
+	return utils.GetServiceName(app.Username+"-"+app.AppName, suffix)
 }
