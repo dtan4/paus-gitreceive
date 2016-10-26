@@ -194,6 +194,14 @@ func (c *Compose) Push(images map[string]*Image) error {
 	return nil
 }
 
+// ReplaceImages replaces image of service to the given one
+func (c *Compose) ReplaceImages(images map[string]*Image) {
+	for svcName, image := range images {
+		svc, _ := c.project.ServiceConfigs.Get(svcName)
+		svc.Image = image.String()
+	}
+}
+
 func (c *Compose) GetContainerID(service string) (string, error) {
 	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "ps", "-q", service)
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
