@@ -32,7 +32,7 @@ endif
 
 .PHONY: test
 test:
-	go test -v `glide novendor`
+	go test -cover -v `glide novendor`
 
 .PHONY: update-deps
 update-deps: glide
