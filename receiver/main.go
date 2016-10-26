@@ -108,7 +108,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose, deployment, config.ClusterName)
+	webContainerID, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
 
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)

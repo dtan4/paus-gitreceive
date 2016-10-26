@@ -12,7 +12,7 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
-func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment, clusterName string) (string, error) {
+func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment, clusterName, region string) (string, error) {
 	var err error
 
 	msg.PrintTitle("Building ...")
@@ -35,7 +35,9 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Convert to TaskDefinition...")
 
-	taskDefinition, err := compose.TransformToTaskDefinition(application.TaskDefinitionName())
+	serviceName := application.ServiceName(util.Timestamp())
+
+	taskDefinition, err := compose.TransformToTaskDefinition(application.TaskDefinitionName(), serviceName, region)
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +53,7 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Creating service ...")
 
-	svc, err := service.CreateService(application.ServiceName(util.Timestamp()), clusterName, *td.TaskDefinitionArn)
+	svc, err := service.CreateService(serviceName, clusterName, *td.TaskDefinitionArn)
 	if err != nil {
 		return "", err
 	}
