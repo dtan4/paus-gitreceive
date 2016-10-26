@@ -90,7 +90,8 @@ func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Co
 	}, nil
 }
 
-func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
+// Build builds Docker images written in compose yml
+func (c *Compose) Build(deployment *Deployment) (map[string]*Image, error) {
 	var (
 		buildArgs []docker.BuildArg
 		opts      docker.BuildImageOptions
@@ -108,7 +109,7 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 	}()
 
 	client, _ := docker.NewClient(c.dockerHost)
-	images := []*Image{}
+	images := make(map[string]*Image)
 
 	for _, name := range c.project.ServiceConfigs.Keys() {
 		svc, _ = c.project.ServiceConfigs.Get(name)
@@ -129,7 +130,7 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 
 			image, err = ImageFromString(svc.Image)
 			if err != nil {
-				return []*Image{}, err
+				return make(map[string]*Image), err
 			}
 		}
 
@@ -144,16 +145,17 @@ func (c *Compose) Build(deployment *Deployment) ([]*Image, error) {
 		}
 
 		if err := client.BuildImage(opts); err != nil {
-			return []*Image{}, errors.Wrapf(err, "Failed to build image. service: %s", name)
+			return make(map[string]*Image), errors.Wrapf(err, "Failed to build image. service: %s", name)
 		}
 
-		images = append(images, image)
+		images[name] = image
 	}
 
 	return images, nil
 }
 
-func (c *Compose) Push(images []*Image) error {
+// Push pushes images to remote Docker registry
+func (c *Compose) Push(images map[string]*Image) error {
 	var (
 		opts docker.PushImageOptions
 	)
@@ -190,6 +192,14 @@ func (c *Compose) Push(images []*Image) error {
 	}
 
 	return nil
+}
+
+// ReplaceImages replaces image of service to the given one
+func (c *Compose) ReplaceImages(images map[string]*Image) {
+	for svcName, image := range images {
+		svc, _ := c.project.ServiceConfigs.Get(svcName)
+		svc.Image = image.String()
+	}
 }
 
 func (c *Compose) GetContainerID(service string) (string, error) {
