@@ -16,6 +16,7 @@ var (
 	branchRegexp = regexp.MustCompile(`[^a-zA-Z0-9.-]`)
 )
 
+// DeregisterInformation removes Vulcand routing information to service container
 func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error {
 	if err := unsetServer(etcd, deployment.ProjectName); err != nil {
 		return err
@@ -34,7 +35,8 @@ func DeregisterInformation(etcd *store.Etcd, deployment *model.Deployment) error
 	return nil
 }
 
-func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDomain string, webContainer *model.Container) ([]string, error) {
+// RegisterInformation registers Vulcand routing information to service container
+func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDomain, serviceAddress string) ([]string, error) {
 	if err := setBackend(etcd, deployment.ProjectName); err != nil {
 		return nil, err
 	}
@@ -66,7 +68,7 @@ func RegisterInformation(etcd *store.Etcd, deployment *model.Deployment, baseDom
 		}
 	}
 
-	if err := setServer(etcd, deployment.ProjectName, webContainer, baseDomain); err != nil {
+	if err := setServer(etcd, deployment.ProjectName, baseDomain, serviceAddress); err != nil {
 		return nil, err
 	}
 

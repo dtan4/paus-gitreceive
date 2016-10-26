@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -108,40 +107,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	webContainerID, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
-
+	serviceAddress, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)
 		os.Exit(1)
 	}
 
 	msg.PrintTitle("Application container is launched.")
-
-	webContainer, err := model.ContainerFromID(config.DockerHost, webContainerID)
-
-	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
-
-	path, interval, maxTry, err := application.HealthCheck()
-
-	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
-
-	callback := func(path string, try int) {
-		msg.Println(fmt.Sprintf("      Ping to %s (%d times) ...", path, try))
-	}
-
-	msg.PrintTitle("Start healthcheck ...")
-
-	if !webContainer.ExecuteHealthCheck(path, interval, maxTry, callback) {
-		msg.PrintError("=====> Web container is not active. Aborted.")
-		compose.Stop()
-		os.Exit(1)
-	}
 
 	msg.PrintTitle("Registering metadata ...")
 
@@ -152,7 +124,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, webContainer)
+	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, serviceAddress)
 
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)

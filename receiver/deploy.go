@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
@@ -66,13 +67,25 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 		return "", err
 	}
 
-	webContainerID, err := compose.GetContainerID("web")
-
+	webContainer, err := service.GetWebContainer(svc)
 	if err != nil {
 		return "", err
 	}
 
-	return webContainerID, nil
+	instanceID, err := service.GetRunningInstance(svc)
+	if err != nil {
+		return "", err
+	}
+
+	instance, err := service.GetInstance(instanceID)
+	if err != nil {
+		return "", err
+	}
+
+	publicIP := *instance.PublicIpAddress
+	port := *webContainer.NetworkBindings[0].HostPort
+
+	return fmt.Sprintf("%s:%d", publicIP, port), nil
 }
 
 func injectBuildArgs(application *model.Application, compose *model.Compose) error {
