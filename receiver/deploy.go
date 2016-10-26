@@ -12,7 +12,7 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
-func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment) (string, error) {
+func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment, clusterName string) (string, error) {
 	var err error
 
 	msg.PrintTitle("Building ...")
@@ -42,19 +42,25 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Registering TaskDefinition...")
 
-	if err := service.RegisterTaskDefinition(taskDefinition); err != nil {
+	td, err := service.RegisterTaskDefinition(taskDefinition)
+	if err != nil {
 		return "", err
 	}
 
-	msg.PrintTitle("Pulling ...")
+	msg.Println("TaskDefinition: " + *td.TaskDefinitionArn)
 
-	if err = compose.Pull(); err != nil {
+	msg.PrintTitle("Creating service ...")
+
+	svc, err := service.CreateService("serviceName4", clusterName, *td.TaskDefinitionArn)
+	if err != nil {
 		return "", err
 	}
 
-	msg.PrintTitle("Deploying ...")
+	msg.Println("Service: " + *svc.ServiceArn)
 
-	if err = compose.Up(); err != nil {
+	msg.PrintTitle("Wait for service becomes ACTIVE ...")
+
+	if err := service.WaitUntilServicesStable(svc); err != nil {
 		return "", err
 	}
 

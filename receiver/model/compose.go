@@ -258,17 +258,6 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 	}
 }
 
-func (c *Compose) Pull() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "pull")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *Compose) RewritePortBindings() {
 	var newPorts []string
 
@@ -340,17 +329,6 @@ func (c *Compose) TransformToTaskDefinition() (*ecs.TaskDefinition, error) {
 
 func (c *Compose) Stop() error {
 	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "stop")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Compose) Up() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {
