@@ -6,6 +6,7 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
+	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
@@ -25,6 +26,23 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 	msg.PrintTitle("Pushing ...")
 
 	if err = compose.Push(images); err != nil {
+		return "", err
+	}
+
+	msg.PrintTitle("Replacing images...")
+
+	compose.ReplaceImages(images)
+
+	msg.PrintTitle("Convert to TaskDefinition...")
+
+	taskDefinition, err := compose.TransformToTaskDefinition()
+	if err != nil {
+		return "", err
+	}
+
+	msg.PrintTitle("Registering TaskDefinition...")
+
+	if err := service.RegisterTaskDefinition(taskDefinition); err != nil {
 		return "", err
 	}
 

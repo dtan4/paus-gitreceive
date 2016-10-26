@@ -328,7 +328,8 @@ func (c *Compose) SaveAs(filePath string) error {
 
 // TransformToTaskDefinition converts the compose yml into ECS TaskDefinition
 func (c *Compose) TransformToTaskDefinition() (*ecs.TaskDefinition, error) {
-	taskDefinitionName := ""
+	// TOOD: set appropriate TaskDefinition name
+	taskDefinitionName := "paus-sample"
 	taskDefinition, err := utils.ConvertToTaskDefinition(taskDefinitionName, c.context, c.project)
 	if err != nil {
 		return nil, err
