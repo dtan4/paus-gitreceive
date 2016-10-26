@@ -194,8 +194,8 @@ func (c *Compose) Push(images map[string]*Image) error {
 	return nil
 }
 
-// ReplaceImages replaces image of service to the given one
-func (c *Compose) ReplaceImages(images map[string]*Image) {
+// UpdateImages replaces image of service to the given one
+func (c *Compose) UpdateImages(images map[string]*Image) {
 	for svcName, image := range images {
 		svc, _ := c.project.ServiceConfigs.Get(svcName)
 		svc.Image = image.String()

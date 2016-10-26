@@ -36,7 +36,7 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.PrintTitle("Rewrite compose yml to use built images...")
 
-	compose.ReplaceImages(images)
+	compose.UpdateImages(images)
 
 	msg.PrintTitle("Convert to TaskDefinition...")
 
