@@ -52,6 +52,12 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 
 	msg.Println("TaskDefinition: " + *td.TaskDefinitionArn)
 
+	msg.PrintTitle("Creating Log Group...")
+
+	if err := service.CreateLogGroup(serviceName); err != nil {
+		return "", err
+	}
+
 	msg.PrintTitle("Creating service ...")
 
 	svc, err := service.CreateService(serviceName, clusterName, *td.TaskDefinitionArn)
