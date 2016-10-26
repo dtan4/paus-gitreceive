@@ -16,7 +16,7 @@ import (
 func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment, clusterName, region string) (string, error) {
 	var err error
 
-	msg.PrintTitle("Building ...")
+	msg.PrintTitle("Building images...")
 
 	images, err := compose.Build(deployment)
 
@@ -24,13 +24,17 @@ func deploy(application *model.Application, compose *model.Compose, deployment *
 		return "", err
 	}
 
-	msg.PrintTitle("Pushing ...")
+	for _, image := range images {
+		msg.Println("Build completed: " + image.String())
+	}
+
+	msg.PrintTitle("Pushing images...")
 
 	if err = compose.Push(images); err != nil {
 		return "", err
 	}
 
-	msg.PrintTitle("Replacing images...")
+	msg.PrintTitle("Rewrite compose yml to use built images...")
 
 	compose.ReplaceImages(images)
 
@@ -139,11 +143,11 @@ func prepareComposeFile(application *model.Application, deployment *model.Deploy
 func printDeployedURLs(repository string, config *config.Config, identifiers []string) {
 	var url string
 
-	msg.PrintTitle(repository + " was successfully deployed at:")
+	msg.PrintTitle(repository + " was successfully deployed!")
 
 	for _, identifier := range identifiers {
 		url = strings.ToLower(config.URIScheme + "://" + identifier + "." + config.BaseDomain)
-		msg.Println("         " + url)
+		msg.Println("  " + url)
 	}
 }
 

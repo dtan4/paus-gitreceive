@@ -51,7 +51,7 @@ func main() {
 	}
 
 	if !application.DirExists() {
-		msg.PrintError("=====> Application not found: " + application.AppName)
+		msg.PrintError("Application not found: " + application.AppName)
 		os.Exit(1)
 	}
 
@@ -74,7 +74,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.PrintTitle("Getting submodules ...")
+	msg.PrintTitle("Getting submodules...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
 		msg.PrintErrorf("%+v\n", err)
@@ -113,9 +113,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	msg.PrintTitle("Application container is launched.")
+	msg.PrintTitle("Application container is launched!")
 
-	msg.PrintTitle("Registering metadata ...")
+	msg.PrintTitle("Registering metadata...")
 
 	deployment.Timestamp = util.Timestamp()
 
