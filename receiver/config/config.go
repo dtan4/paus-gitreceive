@@ -14,6 +14,7 @@ const (
 type Config struct {
 	AWSRegion     string
 	BaseDomain    string `envconfig:"base_domain"`
+	ClusterName   string `envconfig:"cluster_name"`
 	DockerHost    string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
 	EtcdEndpoint  string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
 	MaxAppDeploy  int64  `envconfig:"max_app_deploy" default:"10"`
@@ -21,6 +22,7 @@ type Config struct {
 	URIScheme     string `envconfig:"uri_scheme"     default:"http"`
 }
 
+// LoadConfig loads config values from environment variables
 func LoadConfig() (*Config, error) {
 	var config Config
 

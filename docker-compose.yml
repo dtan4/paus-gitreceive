@@ -12,6 +12,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
       - PAUS_BASE_DOMAIN=pausapp.com
+      - PAUS_CLUSTER_NAME=${PAUS_CLUSTER_NAME}
       - PAUS_DOCKER_HOST=unix:///var/run/docker.sock
       - PAUS_ETCD_ENDPOINT=http://etcd:2379
       - PAUS_MAX_APP_DEPLOY=2
