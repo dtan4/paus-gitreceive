@@ -118,28 +118,6 @@ func (app *Application) HealthCheck() (string, int, int, error) {
 	return path, interval, maxTry, nil
 }
 
-func (app *Application) RegisterMetadata(revision, timestamp string) error {
-	userDirectoryKey := "/paus/users/" + app.Username
-
-	if !app.etcd.HasKey(userDirectoryKey) {
-		_ = app.etcd.Mkdir(userDirectoryKey)
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
-
-	if !app.etcd.HasKey(appDirectoryKey) {
-		_ = app.etcd.Mkdir(appDirectoryKey)
-		_ = app.etcd.Mkdir(appDirectoryKey + "/deployments")
-		_ = app.etcd.Mkdir(appDirectoryKey + "/envs")
-	}
-
-	if err := app.etcd.Set(appDirectoryKey+"/deployments/"+timestamp, revision); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // TaskDefinitionName returns the name of TaskDefinition
 func (app *Application) TaskDefinitionName() string {
 	return utils.GetTaskDefinitionName(app.Username + "-" + app.AppName)

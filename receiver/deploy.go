@@ -8,9 +8,7 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/service"
-	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
-	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
 func deploy(application *model.Application, compose *model.Compose, deployment *model.Deployment, clusterName, region string) (string, error) {
