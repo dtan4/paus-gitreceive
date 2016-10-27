@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	buildArgsTable = "paus-build-args"
-	envsTable      = "paus-envs"
-	userAppIndex   = "user-app-index"
+	buildArgsTable    = "paus-build-args"
+	envsTable         = "paus-envs"
+	healthchecksTable = "paus-healthchecks"
+	userAppIndex      = "user-app-index"
 )
 
 type Application struct {
@@ -91,30 +92,25 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	return envs, nil
 }
 
+// HealthCheck returns healthcheck parameters of given application
 func (app *Application) HealthCheck() (string, int, int, error) {
-	keyBase := "/paus/users/" + app.Username + "/apps/" + app.AppName + "/healthcheck"
-
-	path, err := app.etcd.Get(keyBase + "/path")
+	items, err := service.Select(healthchecksTable, userAppIndex, map[string]string{
+		"user": app.Username,
+		"app":  app.AppName,
+	})
 	if err != nil {
 		return "", 0, 0, err
 	}
 
-	i, err := app.etcd.Get(keyBase + "/interval")
+	healthcheck := items[0]
+	path := *healthcheck["path"].S
+
+	interval, err := strconv.Atoi(*healthcheck["interval"].N)
 	if err != nil {
 		return "", 0, 0, err
 	}
 
-	interval, err := strconv.Atoi(i)
-	if err != nil {
-		return "", 0, 0, err
-	}
-
-	m, err := app.etcd.Get(keyBase + "/max-try")
-	if err != nil {
-		return "", 0, 0, err
-	}
-
-	maxTry, err := strconv.Atoi(m)
+	maxTry, err := strconv.Atoi(*healthcheck["max-try"].N)
 	if err != nil {
 		return "", 0, 0, err
 	}
