@@ -12,6 +12,7 @@ import (
 
 const (
 	buildArgsTable = "paus-build-args"
+	envsTable      = "paus-envs"
 	userAppIndex   = "user-app-index"
 )
 
@@ -103,41 +104,25 @@ func (app *Application) DirExists() bool {
 	return app.etcd.HasKey("/paus/users/" + app.Username + "/apps/" + app.AppName)
 }
 
+// EnvironmentVariables returns environment variables of given application
 func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	var envs = make(map[string]string)
 
-	userDirectoryKey := "/paus/users/" + app.Username
-
-	if !app.etcd.HasKey(userDirectoryKey) {
-		return map[string]string{}, nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
-
-	if !app.etcd.HasKey(appDirectoryKey) {
-		return map[string]string{}, nil
-	}
-
-	envDirectoryKey := appDirectoryKey + "/envs/"
-
-	if !app.etcd.HasKey(envDirectoryKey) {
-		return map[string]string{}, nil
-	}
-
-	envKeys, err := app.etcd.List(envDirectoryKey, false)
+	items, err := service.Select(envsTable, userAppIndex, map[string]string{
+		"user": app.Username,
+		"app":  app.AppName,
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, key := range envKeys {
-		value, err := app.etcd.Get(key)
+	var key, value string
 
-		if err != nil {
-			return nil, err
-		}
-
-		envs[strings.Replace(key, envDirectoryKey, "", 1)] = value
+	for _, attrValue := range items {
+		key = *attrValue["key"].S
+		value = *attrValue["value"].S
+		envs[key] = value
 	}
 
 	return envs, nil
