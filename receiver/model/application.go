@@ -22,6 +22,7 @@ type Application struct {
 	AppName    string
 }
 
+// ApplicationFromArgs creates new Application from gitreceive arguments
 // args:
 //  user/app, 19fb23cd71a4cf2eab00ad1a393e40de4ed61531, user, 4c:1f:92:b9:43:2b:23:0b:c0:e8:ab:12:cd:34:ef:56, refs/heads/branch-name
 func ApplicationFromArgs(args []string) (*Application, error) {
