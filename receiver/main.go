@@ -43,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	application, err := model.ApplicationFromArgs(os.Args[1:], etcd)
+	application, err := model.ApplicationFromArgs(os.Args[1:])
 
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)

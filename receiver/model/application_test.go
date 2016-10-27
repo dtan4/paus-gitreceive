@@ -2,17 +2,14 @@ package model
 
 import (
 	"testing"
-
-	"github.com/dtan4/paus-gitreceive/receiver/store"
 )
 
 func TestApplicationFromArgs(t *testing.T) {
 	var args []string
 
 	args = []string{}
-	etcd, _ := store.NewEtcd("http://example.com:2379")
 
-	_, err := ApplicationFromArgs(args, etcd)
+	_, err := ApplicationFromArgs(args)
 
 	if err == nil {
 		t.Fatalf("Error should be raised")

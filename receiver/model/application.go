@@ -6,7 +6,6 @@ import (
 
 	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
 	"github.com/dtan4/paus-gitreceive/receiver/service"
-	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
 
@@ -21,13 +20,11 @@ type Application struct {
 	Repository string
 	Username   string
 	AppName    string
-
-	etcd *store.Etcd
 }
 
 // args:
 //  user/app, 19fb23cd71a4cf2eab00ad1a393e40de4ed61531, user, 4c:1f:92:b9:43:2b:23:0b:c0:e8:ab:12:cd:34:ef:56, refs/heads/branch-name
-func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) {
+func ApplicationFromArgs(args []string) (*Application, error) {
 	if len(args) < 5 {
 		return nil, errors.Errorf("5 arguments (repository, revision, username, fingerprint, refname) must be passed. got: %d", len(args))
 	}
@@ -40,7 +37,6 @@ func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) 
 		Repository: repository,
 		Username:   username,
 		AppName:    appName,
-		etcd:       etcd,
 	}, nil
 }
 
