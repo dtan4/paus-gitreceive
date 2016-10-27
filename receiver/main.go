@@ -90,10 +90,7 @@ func main() {
 
 	msg.PrintTitle("docker-compose.yml was found")
 
-	if err := rotateDeployments(etcd, application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
+	// TODO: rotateDeployments
 
 	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.AWSRegion)
 
