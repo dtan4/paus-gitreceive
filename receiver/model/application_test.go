@@ -27,7 +27,7 @@ func TestApplicationFromArgs(t *testing.T) {
 	expectedUsername := "dtan4"
 	expectedAppName := "rails-sample"
 
-	application, err := ApplicationFromArgs(args, etcd)
+	application, err := ApplicationFromArgs(args)
 
 	if err != nil {
 		t.Fatalf("Unexpected error has been raised. error: %s", err)
