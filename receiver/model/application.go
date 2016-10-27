@@ -52,7 +52,6 @@ func (app *Application) BuildArgs() (map[string]string, error) {
 		"user": app.Username,
 		"app":  app.AppName,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,6 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 		"user": app.Username,
 		"app":  app.AppName,
 	})
-
 	if err != nil {
 		return nil, err
 	}
