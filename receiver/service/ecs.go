@@ -20,7 +20,6 @@ func CreateService(serviceName, clusterName, taskDefinitionArn string) (*ecs.Ser
 		TaskDefinition: aws.String(taskDefinitionArn),
 		Cluster:        aws.String(clusterName),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,6 @@ func describeContainerInstances(service *ecs.Service, containerInstanceArn strin
 		Cluster:            service.ClusterArn,
 		ContainerInstances: aws.StringSlice([]string{containerInstanceArn}),
 	})
-
 	if err != nil {
 		return []*ecs.ContainerInstance{}, err
 	}
@@ -90,7 +88,6 @@ func describeTasks(service *ecs.Service, taskArn string) ([]*ecs.Task, error) {
 		Cluster: service.ClusterArn,
 		Tasks:   aws.StringSlice([]string{taskArn}),
 	})
-
 	if err != nil {
 		return []*ecs.Task{}, err
 	}
@@ -103,7 +100,6 @@ func listTasks(service *ecs.Service) ([]*string, error) {
 		Cluster:     service.ClusterArn,
 		ServiceName: service.ServiceArn,
 	})
-
 	if err != nil {
 		return []*string{}, err
 	}
