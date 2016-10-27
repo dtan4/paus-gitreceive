@@ -5,8 +5,14 @@ import (
 	"strings"
 
 	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
+	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
+)
+
+const (
+	buildArgsTable = "paus-build-args"
+	userAppIndex   = "user-app-index"
 )
 
 type Application struct {
@@ -36,41 +42,25 @@ func ApplicationFromArgs(args []string, etcd *store.Etcd) (*Application, error) 
 	}, nil
 }
 
+// BuildArgs returns build args of given application
 func (app *Application) BuildArgs() (map[string]string, error) {
 	var args = make(map[string]string)
 
-	userDirectoryKey := "/paus/users/" + app.Username
-
-	if !app.etcd.HasKey(userDirectoryKey) {
-		return map[string]string{}, nil
-	}
-
-	appDirectoryKey := userDirectoryKey + "/apps/" + app.AppName
-
-	if !app.etcd.HasKey(appDirectoryKey) {
-		return map[string]string{}, nil
-	}
-
-	buildArgsKey := appDirectoryKey + "/build-args/"
-
-	if !app.etcd.HasKey(buildArgsKey) {
-		return map[string]string{}, nil
-	}
-
-	buildArgKeys, err := app.etcd.List(buildArgsKey, false)
+	items, err := service.Select(buildArgsTable, userAppIndex, map[string]string{
+		"user": app.Username,
+		"app":  app.AppName,
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, key := range buildArgKeys {
-		value, err := app.etcd.Get(key)
+	var key, value string
 
-		if err != nil {
-			return nil, err
-		}
-
-		args[strings.Replace(key, buildArgsKey, "", 1)] = value
+	for _, attrValue := range items {
+		key = *attrValue["key"].S
+		value = *attrValue["value"].S
+		args[key] = value
 	}
 
 	return args, nil
