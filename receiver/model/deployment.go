@@ -46,7 +46,3 @@ func NewDeployment(app *Application, branch, revision, timestamp, repositoryDir 
 		Timestamp:       timestamp,
 	}
 }
-
-func (d *Deployment) Register() error {
-	return d.App.RegisterMetadata(d.Revision, d.Timestamp)
-}

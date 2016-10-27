@@ -43,15 +43,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	application, err := model.ApplicationFromArgs(os.Args[1:], etcd)
+	application, err := model.ApplicationFromArgs(os.Args[1:])
 
 	if err != nil {
 		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
-
-	if !application.DirExists() {
-		msg.PrintError("Application not found: " + application.AppName)
 		os.Exit(1)
 	}
 
@@ -90,10 +85,7 @@ func main() {
 
 	msg.PrintTitle("docker-compose.yml was found")
 
-	if err := rotateDeployments(etcd, application, config.MaxAppDeploy, config.DockerHost, config.RepositoryDir); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
+	// TODO: rotateDeployments
 
 	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.AWSRegion)
 
@@ -116,13 +108,6 @@ func main() {
 	msg.PrintTitle("Application container is launched!")
 
 	msg.PrintTitle("Registering metadata...")
-
-	deployment.Timestamp = util.Timestamp()
-
-	if err = deployment.Register(); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
-	}
 
 	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, serviceAddress)
 
