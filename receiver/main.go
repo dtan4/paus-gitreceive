@@ -2,14 +2,11 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
-	"github.com/dtan4/paus-gitreceive/receiver/util"
-	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
 )
 
 func initialize() (*config.Config, *store.Etcd, error) {
@@ -49,57 +46,7 @@ func main() {
 		printErrorAndExit(err)
 	}
 
-	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, deployment.ProjectName, os.Stdin)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-
-	if err = os.Chdir(repositoryPath); err != nil {
-		printErrorAndExit(err)
-	}
-
-	msg.PrintTitle("Getting submodules...")
-
-	if err = util.GetSubmodules(repositoryPath); err != nil {
-		printErrorAndExit(err)
-	}
-
-	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
-
-	if _, err := os.Stat(composeFilePath); err != nil {
-		printErrorAndExit(err)
-	}
-
-	msg.PrintTitle("docker-compose.yml was found")
-
-	// TODO: rotateDeployments
-
-	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.AWSRegion)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-
-	if err := prepareComposeFile(application, deployment, compose); err != nil {
-		printErrorAndExit(err)
-	}
-
-	serviceAddress, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-
-	msg.PrintTitle("Application container is launched!")
-
-	msg.PrintTitle("Registering metadata...")
-
-	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, serviceAddress)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-
-	printDeployedURLs(application.Repository, config, identifiers)
-
-	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
+	if err := deploy(application, deployment, config, etcd); err != nil {
 		printErrorAndExit(err)
 	}
 }
