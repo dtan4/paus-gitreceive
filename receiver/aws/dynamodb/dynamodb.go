@@ -1,4 +1,4 @@
-package service
+package dynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -6,13 +6,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-var (
-	dynamodbSvc = dynamodb.New(session.New(), &aws.Config{})
-)
+type DynamoDBClient struct {
+	client *dynamodb.DynamoDB
+}
+
+// NewDynamoDBClient creates new DynamoDBClient object
+func NewDynamoDBClient() *DynamoDBClient {
+	return &DynamoDBClient{
+		client: dynamodb.New(session.New(), &aws.Config{}),
+	}
+}
 
 // List returns all items in the given table
-func List(table string) ([]map[string]*dynamodb.AttributeValue, error) {
-	resp, err := dynamodbSvc.Scan(&dynamodb.ScanInput{
+func (c *DynamoDBClient) List(table string) ([]map[string]*dynamodb.AttributeValue, error) {
+	resp, err := c.client.Scan(&dynamodb.ScanInput{
 		TableName: aws.String(table),
 	})
 	if err != nil {
@@ -23,7 +30,7 @@ func List(table string) ([]map[string]*dynamodb.AttributeValue, error) {
 }
 
 // Select returns matched items in the given table
-func Select(table, index string, filter map[string]string) ([]map[string]*dynamodb.AttributeValue, error) {
+func (c *DynamoDBClient) Select(table, index string, filter map[string]string) ([]map[string]*dynamodb.AttributeValue, error) {
 	keyConditions := make(map[string]*dynamodb.Condition)
 
 	for k, v := range filter {
@@ -46,7 +53,7 @@ func Select(table, index string, filter map[string]string) ([]map[string]*dynamo
 		params.IndexName = aws.String(index)
 	}
 
-	resp, err := dynamodbSvc.Query(params)
+	resp, err := c.client.Query(params)
 	if err != nil {
 		return []map[string]*dynamodb.AttributeValue{}, err
 	}

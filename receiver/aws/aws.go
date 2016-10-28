@@ -2,6 +2,7 @@ package aws
 
 import (
 	"github.com/dtan4/paus-gitreceive/receiver/aws/cloudwatchlogs"
+	"github.com/dtan4/paus-gitreceive/receiver/aws/dynamodb"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ec2"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ecr"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ecs"
@@ -10,6 +11,7 @@ import (
 
 var (
 	cloudWatchLogsClient *cloudwatchlogs.CloudWatchLogsClient
+	dynamoDBClient       *dynamodb.DynamoDBClient
 	ec2Client            *ec2.EC2Client
 	ecsClient            *ecs.ECSClient
 	ecrClient            *ecr.ECRClient
@@ -23,6 +25,15 @@ func CloudWatchLogs() *cloudwatchlogs.CloudWatchLogsClient {
 	}
 
 	return cloudWatchLogsClient
+}
+
+// DynamoDB returns DynamoDB object and create new one if it does not exist
+func DynamoDB() *dynamodb.DynamoDBClient {
+	if dynamoDBClient == nil {
+		dynamoDBClient = dynamodb.NewDynamoDBClient()
+	}
+
+	return dynamoDBClient
 }
 
 // EC2 returns EC2 object and create new one if it does not exist
