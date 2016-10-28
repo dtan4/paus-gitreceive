@@ -1,6 +1,40 @@
-hash: e2456ed949d2385f72ac010fc14d83e04d4502ad6240c80279bf26d131d6b746
-updated: 2016-10-20T14:21:42.393162371+09:00
+hash: 2805b45016b761bf74877fe49d3da23a4a8e37d1a70f8e19c28d289f3d8f066f
+updated: 2016-10-28T15:29:23.33815293+09:00
 imports:
+- name: github.com/aws/aws-sdk-go
+  version: 32cdc88aa5cd2ba4afa049da884aaf9a3d103ef4
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/endpoints
+  - private/protocol
+  - private/protocol/ec2query
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/cloudwatchlogs
+  - service/dynamodb
+  - service/ec2
+  - service/ecr
+  - service/ecs
+  - service/sts
 - name: github.com/coreos/etcd
   version: c33ea20fefe0f435374258ca201cd5fc5edd0ab3
   subpackages:
@@ -55,14 +89,24 @@ imports:
   - project/options
   - utils
   - yaml
+- name: github.com/fatih/color
+  version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsouza/go-dockerclient
   version: a53ba79627e888ef775bdcf15813f07d7a232867
+- name: github.com/go-ini/ini
+  version: cf53f9204df4fbdd7ec4164b57fa6184ba168292
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/jmespath/go-jmespath
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
 - name: github.com/kelseyhightower/envconfig
   version: 3ef4de09ad56571e5d8b3cfdcd31941c0c5e3db9
+- name: github.com/mattn/go-colorable
+  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/opencontainers/runc
   version: 91ff092487fd45d0bcafc96d18d053cc242875a1
   subpackages:

@@ -3,19 +3,24 @@ package model
 // TODO: Use github.com/docker/libcompose
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
+	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
+	"github.com/dtan4/paus-gitreceive/receiver/msg"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -29,8 +34,10 @@ var (
 type Compose struct {
 	ComposeFilePath string
 	ProjectName     string
+	RegistryDomain  string
 
 	dockerHost string
+	context    *project.Context
 	project    *project.Project
 }
 
@@ -41,7 +48,9 @@ type ComposeConfig struct {
 	Networks map[string]*config.NetworkConfig `yaml:"networks,omitempty"`
 }
 
-func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, error) {
+func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Compose, error) {
+	var registryDomain string
+
 	ctx := project.Context{
 		ComposeFiles: []string{composeFilePath},
 		ProjectName:  projectName,
@@ -60,23 +69,135 @@ func NewCompose(dockerHost, composeFilePath, projectName string) (*Compose, erro
 		return nil, errors.Wrap(err, "Failed to parse docker-compose.yml.")
 	}
 
+	if awsRegion != "" {
+		accountID, err := aws.STS().GetAWSAccountID()
+		if err != nil {
+			return nil, err
+		}
+
+		registryDomain = aws.ECR().GetRegistryDomain(accountID, awsRegion)
+	}
+
 	return &Compose{
 		ComposeFilePath: composeFilePath,
 		ProjectName:     projectName,
+		RegistryDomain:  registryDomain,
 		dockerHost:      dockerHost,
+		context:         &ctx,
 		project:         prj,
 	}, nil
 }
 
-func (c *Compose) Build() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "build")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
+// Build builds Docker images written in compose yml
+func (c *Compose) Build(deployment *Deployment) (map[string]*Image, error) {
+	var (
+		buildArgs []docker.BuildArg
+		opts      docker.BuildImageOptions
+		svc       *config.ServiceConfig
+		image     *Image
+	)
 
-	if err := util.RunCommand(cmd); err != nil {
+	reader, outputBuf := io.Pipe()
+	go func() {
+		sc := bufio.NewScanner(reader)
+
+		for sc.Scan() {
+			msg.Println(sc.Text())
+		}
+	}()
+
+	client, _ := docker.NewClient(c.dockerHost)
+	images := make(map[string]*Image)
+
+	for _, name := range c.project.ServiceConfigs.Keys() {
+		svc, _ = c.project.ServiceConfigs.Get(name)
+
+		if svc.Build.Context == "" {
+			continue
+		}
+
+		for k, v := range svc.Build.Args {
+			buildArgs = append(buildArgs, docker.BuildArg{Name: k, Value: v})
+		}
+
+		if svc.Image == "" {
+			n := deployment.App.Username + "-" + deployment.App.AppName + "-" + name
+			image = NewImage(c.RegistryDomain, n, deployment.Revision)
+		} else {
+			var err error
+
+			image, err = ImageFromString(svc.Image)
+			if err != nil {
+				return make(map[string]*Image), err
+			}
+		}
+
+		opts = docker.BuildImageOptions{
+			BuildArgs:      buildArgs,
+			ContextDir:     svc.Build.Context,
+			Dockerfile:     svc.Build.Dockerfile,
+			Name:           image.String(),
+			OutputStream:   outputBuf,
+			Pull:           true,
+			SuppressOutput: false,
+		}
+
+		if err := client.BuildImage(opts); err != nil {
+			return make(map[string]*Image), errors.Wrapf(err, "Failed to build image. service: %s", name)
+		}
+
+		images[name] = image
+	}
+
+	return images, nil
+}
+
+// Push pushes images to remote Docker registry
+func (c *Compose) Push(images map[string]*Image) error {
+	var (
+		opts docker.PushImageOptions
+	)
+
+	client, _ := docker.NewClient(c.dockerHost)
+
+	accountID, err := aws.STS().GetAWSAccountID()
+	if err != nil {
 		return err
 	}
 
+	// default registry ID is equivalent to AWS account ID
+	authConf, err := aws.ECR().GetECRAuthConf(accountID)
+	if err != nil {
+		return err
+	}
+
+	for _, image := range images {
+		if !aws.ECR().RepositoryExists(image.Registry, image.Name) {
+			if err := aws.ECR().CreateRepository(image.Registry, image.Name); err != nil {
+				return err
+			}
+		}
+
+		opts = docker.PushImageOptions{
+			Registry: image.Registry,
+			Name:     image.Registry + "/" + image.Name,
+			Tag:      image.Tag,
+		}
+
+		if err := client.PushImage(opts, authConf); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// UpdateImages replaces image of service to the given one
+func (c *Compose) UpdateImages(images map[string]*Image) {
+	for svcName, image := range images {
+		svc, _ := c.project.ServiceConfigs.Get(svcName)
+		svc.Image = image.String()
+	}
 }
 
 func (c *Compose) GetContainerID(service string) (string, error) {
@@ -135,17 +256,6 @@ func (c *Compose) InjectEnvironmentVariables(envs map[string]string) {
 	}
 }
 
-func (c *Compose) Pull() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "pull")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *Compose) RewritePortBindings() {
 	var newPorts []string
 
@@ -172,50 +282,18 @@ func (c *Compose) RewritePortBindings() {
 	}
 }
 
-func (c *Compose) SaveAs(filePath string) error {
-	services := map[string]*config.ServiceConfig{}
-
-	for _, key := range c.project.ServiceConfigs.Keys() {
-		if svc, ok := c.project.ServiceConfigs.Get(key); ok {
-			services[key] = svc
-		}
-	}
-
-	cfg := &ComposeConfig{
-		Version:  "2",
-		Services: services,
-		Volumes:  c.project.VolumeConfigs,
-		Networks: c.project.NetworkConfigs,
-	}
-
-	data, err := yaml.Marshal(cfg)
-
+// TransformToTaskDefinition converts the compose yml into ECS TaskDefinition
+func (c *Compose) TransformToTaskDefinition(name, serviceName, region string) (*ecs.TaskDefinition, error) {
+	taskDefinition, err := utils.ConvertToTaskDefinition(name, c.context, c.project, serviceName, region)
 	if err != nil {
-		return errors.Wrap(err, "Failed to generate YAML file.")
+		return nil, err
 	}
 
-	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return errors.Wrapf(err, "Failed to save as YAML file. path: %s", filePath)
-	}
-
-	c.ComposeFilePath = filePath
-
-	return nil
+	return taskDefinition, nil
 }
 
 func (c *Compose) Stop() error {
 	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "stop")
-	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
-
-	if err := util.RunCommand(cmd); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Compose) Up() error {
-	cmd := exec.Command("docker-compose", "-f", c.ComposeFilePath, "-p", c.ProjectName, "up", "-d")
 	cmd.Env = append(os.Environ(), "DOCKER_HOST="+c.dockerHost)
 
 	if err := util.RunCommand(cmd); err != nil {

@@ -12,6 +12,7 @@ import (
 const (
 	dockerHost  = "unix:///var/run/docker.sock"
 	projectName = "paustest"
+	awsRegion   = ""
 )
 
 var (
@@ -49,10 +50,50 @@ func setup() {
 	v2FilePathBuildArg = fixturePath("docker-compose-v2-buildarg.yml")
 	v2FilePathNoBuildEnv = fixturePath("docker-compose-v2-nobuildenv.yml")
 
-	v1Compose, _ = NewCompose(dockerHost, v1FilePath, projectName)
-	v2Compose, _ = NewCompose(dockerHost, v2FilePath, projectName)
-	v2ComposeBuildArg, _ = NewCompose(dockerHost, v2FilePathBuildArg, projectName)
-	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName)
+	v1Compose, _ = NewCompose(dockerHost, v1FilePath, projectName, awsRegion)
+	v2Compose, _ = NewCompose(dockerHost, v2FilePath, projectName, awsRegion)
+	v2ComposeBuildArg, _ = NewCompose(dockerHost, v2FilePathBuildArg, projectName, awsRegion)
+	v2ComposeNoBuildEnv, _ = NewCompose(dockerHost, v2FilePathNoBuildEnv, projectName, awsRegion)
+}
+
+func TestUpdateImages(t *testing.T) {
+	var (
+		images     map[string]*Image
+		webService *config.ServiceConfig
+		expected   string
+		actual     string
+	)
+
+	setup()
+
+	// TODO: use mock for image.String()
+	images = map[string]*Image{
+		"web": &Image{
+			Registry: "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com",
+			Name:     "dtan4-web",
+			Tag:      "0123abcd",
+		},
+	}
+
+	v1Compose.UpdateImages(images)
+
+	webService, _ = v1Compose.project.ServiceConfigs.Get("web")
+	expected = "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com/dtan4-web:0123abcd"
+	actual = webService.Image
+
+	if actual != expected {
+		t.Fatalf("Updated image name is mismatched. expected: %#v, actual: %#v", expected, actual)
+	}
+
+	v2Compose.UpdateImages(images)
+
+	webService, _ = v2Compose.project.ServiceConfigs.Get("web")
+	expected = "012345678901.dkr.ecr.ap-northeast-1.amazonaws.com/dtan4-web:0123abcd"
+	actual = webService.Image
+
+	if actual != expected {
+		t.Fatalf("Updated image name is mismatched. expected: %#v, actual: %#v", expected, actual)
+	}
 }
 
 func TestInjectBuildArgs(t *testing.T) {
@@ -202,24 +243,4 @@ func TestRewritePortBindings(t *testing.T) {
 	if len(v2DbPorts) != 1 || v2DbPorts[0] != "5432" {
 		t.Fatalf("Failed to rewrite non-web ports in V2. Expect: [5432], actual: %v", v2DbPorts)
 	}
-}
-
-func TestSaveAs(t *testing.T) {
-	setup()
-
-	newFilePath := filepath.Join("/tmp", "new-docker-compose.yml")
-
-	if fileExists(newFilePath) {
-		os.Remove(newFilePath)
-	}
-
-	if err := v1Compose.SaveAs(newFilePath); err != nil {
-		t.Fatalf("SaveAs() fails: %s", err.Error())
-	}
-
-	if !fileExists(newFilePath) {
-		t.Fatalf("SaveAs() does not create %s", newFilePath)
-	}
-
-	os.Remove(newFilePath)
 }

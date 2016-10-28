@@ -1,34 +1,20 @@
 package config
 
 import (
-	"bufio"
 	"os"
-	"reflect"
-	"strconv"
-	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 )
 
 const (
-	configPrefix   = "paus"
-	configFilePath = "/paus/config"
-)
-
-var (
-	configNames = []string{
-		"BaseDomain",
-		"DockerHost",
-		"EtcdEndpoint",
-		"MaxAppDeploy",
-		"RepositoryDir",
-		"URIScheme",
-	}
+	configPrefix = "paus"
 )
 
 type Config struct {
+	AWSRegion     string
 	BaseDomain    string `envconfig:"base_domain"`
+	ClusterName   string `envconfig:"cluster_name"`
 	DockerHost    string `envconfig:"docker_host"    default:"tcp://localhost:2375"`
 	EtcdEndpoint  string `envconfig:"etcd_endpoint"  default:"http://localhost:2379"`
 	MaxAppDeploy  int64  `envconfig:"max_app_deploy" default:"10"`
@@ -36,34 +22,7 @@ type Config struct {
 	URIScheme     string `envconfig:"uri_scheme"     default:"http"`
 }
 
-func loadConfigFromFile(filePath string) (map[string]string, error) {
-	config := map[string]string{}
-
-	fp, err := os.Open(filePath)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to open %s.", filePath)
-	}
-
-	defer fp.Close()
-
-	scanner := bufio.NewScanner(fp)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		keyValue := strings.Split(line, "=")
-
-		if len(keyValue) < 2 {
-			continue
-		}
-
-		key, value := keyValue[0], strings.Join(keyValue[1:], "=")
-		config[key] = value
-	}
-
-	return config, nil
-}
-
+// LoadConfig loads config values from environment variables
 func LoadConfig() (*Config, error) {
 	var config Config
 
@@ -73,29 +32,7 @@ func LoadConfig() (*Config, error) {
 		return nil, errors.Wrap(err, "Failed to load config from envs.")
 	}
 
-	if _, err := os.Stat(configFilePath); err != nil {
-		return &config, nil
-	}
-
-	configFromFile, err := loadConfigFromFile(configFilePath)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, configName := range configNames {
-		if configName == "MaxAppDeploy" {
-			n, err := strconv.ParseInt(configFromFile[configName], 10, 64)
-
-			if err != nil {
-				return nil, errors.Wrapf(err, "Failed to parse %s as integer. value: %s", configName, configFromFile[configName])
-			}
-
-			reflect.ValueOf(&config).Elem().FieldByName(configName).SetInt(n)
-		} else {
-			reflect.ValueOf(&config).Elem().FieldByName(configName).SetString(configFromFile[configName])
-		}
-	}
+	config.AWSRegion = os.Getenv("AWS_REGION")
 
 	return &config, nil
 }

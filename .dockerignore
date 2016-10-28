@@ -4,5 +4,6 @@
 !files/get-submodules
 !files/sshd_config
 !files/receiver
+!files/receiver-wrapper.sh
 !files/upload-key
 !receiver/bin/receiver_linux-amd64

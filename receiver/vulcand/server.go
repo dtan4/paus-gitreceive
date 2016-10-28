@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/pkg/errors"
 )
@@ -14,10 +13,10 @@ type Server struct {
 }
 
 // {"URL": "http://$web_container_host_ip:$web_container_port"}
-func setServer(etcd *store.Etcd, projectName string, container *model.Container, baseDomain string) error {
-	key := fmt.Sprintf("%s/backends/%s/servers/%s", vulcandKeyBase, projectName, container.ContainerId)
+func setServer(etcd *store.Etcd, projectName string, baseDomain, serviceAddress string) error {
+	key := fmt.Sprintf("%s/backends/%s/servers/%s", vulcandKeyBase, projectName, serviceAddress)
 	server := Server{
-		URL: fmt.Sprintf("http://%s:%s", container.HostIP(), container.HostPort()),
+		URL: fmt.Sprintf("http://%s", serviceAddress),
 	}
 
 	b, err := json.Marshal(server)

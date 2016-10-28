@@ -17,7 +17,11 @@ paus-gitreceive does:
 
 | Key                  | Required | Description                                    | Default                 | Example                 |
 |----------------------|----------|------------------------------------------------|-------------------------|-------------------------|
+| `AWS_ACCESS_KEY_ID`   | Required for local | `AWS_ACCESS_KEY_ID` for the access to ECS / ECR |                         | `AKIAawsaccesskey`           |
+| `AWS_SECRET_ACCESS_KEY`   | Required for local | `AWS_SECRET_ACCESS_KEY` for the access to ECS / ECR |                         | `awssecretaccesskey`           |
+| `AWS_REGION`   | Required for local | `AWS_REGION` where Paus cluster runs |                         | `ap-northeast-1`           |
 | `PAUS_BASE_DOMAIN`   | Required | Base domain for application URL                |                         | `pausapp.com`           |
+| `PAUS_CLUSTER_NAME`   | Required | ECS cluster name which Paus cluster runs |                         | `paus`           |
 | `PAUS_DOCKER_HOST` |          | Endpoint of Docker daemon                       | `tcp://127.0.0.1:2375` | `tcp://127.0.0.1:2377` (Docker Swarm) |
 | `PAUS_ETCD_ENDPOINT` |          | Endpoint of etcd cluster                       | `http://127.0.0.1:2379` | `http://127.0.0.1:2379` |
 | `PAUS_MAX_APP_DEPLOY`    |          | Max number of deployments per applciation | `10`                   | `30`                  |
