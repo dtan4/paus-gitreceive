@@ -141,7 +141,7 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
-	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
+	if err = util.RemoveUnpackedFiles(repositoryPath); err != nil {
 		return err
 	}
 
