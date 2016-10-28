@@ -3,7 +3,12 @@ package model
 import (
 	"regexp"
 
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/pkg/errors"
+)
+
+const (
+	deploymentsTable = "paus-deployments"
 )
 
 var (
@@ -43,4 +48,20 @@ func NewDeployment(app *Application, branch, revision, serviceArn string) *Deplo
 		Revision:    revision,
 		ServiceArn:  serviceArn,
 	}
+}
+
+// Save saves Deployment to DynamoDB
+func (d *Deployment) Save() error {
+	fields := map[string]string{
+		"app":         d.App.AppName,
+		"user":        d.App.Username,
+		"revision":    d.Revision,
+		"service-arn": d.ServiceArn,
+	}
+
+	if err := aws.DynamoDB().Create(deploymentsTable, fields); err != nil {
+		return err
+	}
+
+	return nil
 }
