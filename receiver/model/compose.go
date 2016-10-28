@@ -19,7 +19,6 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
-	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
@@ -73,7 +72,7 @@ func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Co
 	}
 
 	if awsRegion != "" {
-		accountID, err := service.GetAWSAccountID()
+		accountID, err := aws.STS().GetAWSAccountID()
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +162,7 @@ func (c *Compose) Push(images map[string]*Image) error {
 
 	client, _ := docker.NewClient(c.dockerHost)
 
-	accountID, err := service.GetAWSAccountID()
+	accountID, err := aws.STS().GetAWSAccountID()
 	if err != nil {
 		return err
 	}
