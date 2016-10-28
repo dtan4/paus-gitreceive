@@ -4,12 +4,14 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/aws/cloudwatchlogs"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ec2"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ecr"
+	"github.com/dtan4/paus-gitreceive/receiver/aws/ecs"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/sts"
 )
 
 var (
 	cloudWatchLogsClient *cloudwatchlogs.CloudWatchLogsClient
 	ec2Client            *ec2.EC2Client
+	ecsClient            *ecs.ECSClient
 	ecrClient            *ecr.ECRClient
 	stsClient            *sts.STSClient
 )
@@ -30,6 +32,15 @@ func EC2() *ec2.EC2Client {
 	}
 
 	return ec2Client
+}
+
+// ECS returns ECS object and create new one if it does not exist
+func ECS() *ecs.ECSClient {
+	if ecsClient == nil {
+		ecsClient = ecs.NewECSClient()
+	}
+
+	return ecsClient
 }
 
 // ECR returns ECR object and create new one if it does not exist

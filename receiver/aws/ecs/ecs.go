@@ -1,4 +1,4 @@
-package service
+package ecs
 
 import (
 	"fmt"
@@ -8,13 +8,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
-var (
-	ecsSvc = ecs.New(session.New(), &aws.Config{})
-)
+type ECSClient struct {
+	client *ecs.ECS
+}
+
+// NewECSClient creates new ECSClient object
+func NewECSClient() *ECSClient {
+	return &ECSClient{
+		client: ecs.New(session.New(), &aws.Config{}),
+	}
+}
 
 // CreateService creates new service and return ID of Deployment
-func CreateService(serviceName, clusterName, taskDefinitionArn string) (*ecs.Service, error) {
-	resp, err := ecsSvc.CreateService(&ecs.CreateServiceInput{
+func (c *ECSClient) CreateService(serviceName, clusterName, taskDefinitionArn string) (*ecs.Service, error) {
+	resp, err := c.client.CreateService(&ecs.CreateServiceInput{
 		DesiredCount:   aws.Int64(1),
 		ServiceName:    aws.String(serviceName),
 		TaskDefinition: aws.String(taskDefinitionArn),
@@ -28,20 +35,20 @@ func CreateService(serviceName, clusterName, taskDefinitionArn string) (*ecs.Ser
 }
 
 // GetRunningInstance returns instance ID where the service task runs
-func GetRunningInstance(service *ecs.Service) (string, error) {
-	taskArns, err := listTasks(service)
+func (c *ECSClient) GetRunningInstance(service *ecs.Service) (string, error) {
+	taskArns, err := c.listTasks(service)
 	if err != nil {
 		return "", err
 	}
 	taskArn := taskArns[0]
 
-	tasks, err := describeTasks(service, *taskArn)
+	tasks, err := c.describeTasks(service, *taskArn)
 	if err != nil {
 		return "", err
 	}
 	containerInstanceArn := tasks[0].ContainerInstanceArn
 
-	containerInstances, err := describeContainerInstances(service, *containerInstanceArn)
+	containerInstances, err := c.describeContainerInstances(service, *containerInstanceArn)
 	if err != nil {
 		return "", err
 	}
@@ -50,14 +57,14 @@ func GetRunningInstance(service *ecs.Service) (string, error) {
 }
 
 // GetWebContainer returns web container
-func GetWebContainer(service *ecs.Service) (*ecs.Container, error) {
-	taskArns, err := listTasks(service)
+func (c *ECSClient) GetWebContainer(service *ecs.Service) (*ecs.Container, error) {
+	taskArns, err := c.listTasks(service)
 	if err != nil {
 		return nil, err
 	}
 	taskArn := taskArns[0]
 
-	tasks, err := describeTasks(service, *taskArn)
+	tasks, err := c.describeTasks(service, *taskArn)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +78,8 @@ func GetWebContainer(service *ecs.Service) (*ecs.Container, error) {
 	return nil, fmt.Errorf("Web container not found!")
 }
 
-func describeContainerInstances(service *ecs.Service, containerInstanceArn string) ([]*ecs.ContainerInstance, error) {
-	resp, err := ecsSvc.DescribeContainerInstances(&ecs.DescribeContainerInstancesInput{
+func (c *ECSClient) describeContainerInstances(service *ecs.Service, containerInstanceArn string) ([]*ecs.ContainerInstance, error) {
+	resp, err := c.client.DescribeContainerInstances(&ecs.DescribeContainerInstancesInput{
 		Cluster:            service.ClusterArn,
 		ContainerInstances: aws.StringSlice([]string{containerInstanceArn}),
 	})
@@ -83,8 +90,8 @@ func describeContainerInstances(service *ecs.Service, containerInstanceArn strin
 	return resp.ContainerInstances, nil
 }
 
-func describeTasks(service *ecs.Service, taskArn string) ([]*ecs.Task, error) {
-	resp, err := ecsSvc.DescribeTasks(&ecs.DescribeTasksInput{
+func (c *ECSClient) describeTasks(service *ecs.Service, taskArn string) ([]*ecs.Task, error) {
+	resp, err := c.client.DescribeTasks(&ecs.DescribeTasksInput{
 		Cluster: service.ClusterArn,
 		Tasks:   aws.StringSlice([]string{taskArn}),
 	})
@@ -95,8 +102,8 @@ func describeTasks(service *ecs.Service, taskArn string) ([]*ecs.Task, error) {
 	return resp.Tasks, nil
 }
 
-func listTasks(service *ecs.Service) ([]*string, error) {
-	resp, err := ecsSvc.ListTasks(&ecs.ListTasksInput{
+func (c *ECSClient) listTasks(service *ecs.Service) ([]*string, error) {
+	resp, err := c.client.ListTasks(&ecs.ListTasksInput{
 		Cluster:     service.ClusterArn,
 		ServiceName: service.ServiceArn,
 	})
@@ -108,8 +115,8 @@ func listTasks(service *ecs.Service) ([]*string, error) {
 }
 
 // RegisterTaskDefinition creates new TaskDefinition and return ARN of it
-func RegisterTaskDefinition(taskDefinition *ecs.TaskDefinition) (*ecs.TaskDefinition, error) {
-	resp, err := ecsSvc.RegisterTaskDefinition(&ecs.RegisterTaskDefinitionInput{
+func (c *ECSClient) RegisterTaskDefinition(taskDefinition *ecs.TaskDefinition) (*ecs.TaskDefinition, error) {
+	resp, err := c.client.RegisterTaskDefinition(&ecs.RegisterTaskDefinitionInput{
 		Family:               taskDefinition.Family,
 		ContainerDefinitions: taskDefinition.ContainerDefinitions,
 		Volumes:              taskDefinition.Volumes,
@@ -123,8 +130,8 @@ func RegisterTaskDefinition(taskDefinition *ecs.TaskDefinition) (*ecs.TaskDefini
 }
 
 // WaitUntilServicesStable waits services become active.
-func WaitUntilServicesStable(service *ecs.Service) error {
-	if err := ecsSvc.WaitUntilServicesStable(&ecs.DescribeServicesInput{
+func (c *ECSClient) WaitUntilServicesStable(service *ecs.Service) error {
+	if err := c.client.WaitUntilServicesStable(&ecs.DescribeServicesInput{
 		Cluster:  service.ClusterArn,
 		Services: aws.StringSlice([]string{*service.ServiceArn}),
 	}); err != nil {
