@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
@@ -120,7 +121,7 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 		return err
 	}
 
-	instance, err := service.GetInstance(instanceID)
+	instance, err := aws.EC2().GetInstance(instanceID)
 	if err != nil {
 		return err
 	}
