@@ -14,13 +14,11 @@ import (
 
 func initialize() (*config.Config, *store.Etcd, error) {
 	config, err := config.LoadConfig()
-
 	if err != nil {
 		return nil, nil, err
 	}
 
 	etcd, err := store.NewEtcd(config.EtcdEndpoint)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -37,50 +35,39 @@ func main() {
 	}
 
 	config, etcd, err := initialize()
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	application, err := model.ApplicationFromArgs(os.Args[1:])
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	deployment, err := model.DeploymentFromArgs(application, os.Args[1:], "", config.RepositoryDir)
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	repositoryPath, err := util.UnpackReceivedFiles(config.RepositoryDir, application.Username, deployment.ProjectName, os.Stdin)
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	if err = os.Chdir(repositoryPath); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	msg.PrintTitle("Getting submodules...")
 
 	if err = util.GetSubmodules(repositoryPath); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	composeFilePath := filepath.Join(repositoryPath, "docker-compose.yml")
 
 	if _, err := os.Stat(composeFilePath); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	msg.PrintTitle("docker-compose.yml was found")
@@ -88,21 +75,17 @@ func main() {
 	// TODO: rotateDeployments
 
 	compose, err := model.NewCompose(config.DockerHost, composeFilePath, deployment.ProjectName, config.AWSRegion)
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	if err := prepareComposeFile(application, deployment, compose); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	serviceAddress, err := deploy(application, compose, deployment, config.ClusterName, config.AWSRegion)
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	msg.PrintTitle("Application container is launched!")
@@ -110,16 +93,18 @@ func main() {
 	msg.PrintTitle("Registering metadata...")
 
 	identifiers, err := vulcand.RegisterInformation(etcd, deployment, config.BaseDomain, serviceAddress)
-
 	if err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
 	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
-		msg.PrintErrorf("%+v\n", err)
-		os.Exit(1)
+		printErrorAndExit(err)
 	}
+}
+
+func printErrorAndExit(err error) {
+	msg.PrintErrorf("%+v\n", err)
+	os.Exit(1)
 }
