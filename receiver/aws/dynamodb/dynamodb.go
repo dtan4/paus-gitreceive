@@ -60,3 +60,24 @@ func (c *DynamoDBClient) Select(table, index string, filter map[string]string) (
 
 	return resp.Items, nil
 }
+
+// Create create new item in the given table
+func (c *DynamoDBClient) Create(table string, fields map[string]string) error {
+	item := make(map[string]*dynamodb.AttributeValue)
+
+	for k, v := range fields {
+		item[k] = &dynamodb.AttributeValue{
+			S: aws.String(v),
+		}
+	}
+
+	_, err := c.client.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String(table),
+		Item:      item,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

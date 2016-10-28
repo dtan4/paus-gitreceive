@@ -41,7 +41,7 @@ func main() {
 		printErrorAndExit(err)
 	}
 
-	deployment, err := model.DeploymentFromArgs(application, os.Args[1:], "", config.RepositoryDir)
+	deployment, err := model.DeploymentFromArgs(application, os.Args[1:])
 	if err != nil {
 		printErrorAndExit(err)
 	}

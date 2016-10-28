@@ -45,7 +45,7 @@ func GetSubmodules(repositoryPath string) error {
 	return nil
 }
 
-func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
+func RemoveUnpackedFiles(repositoryPath string) error {
 	files, err := ioutil.ReadDir(repositoryPath)
 
 	if err != nil {
@@ -53,12 +53,10 @@ func RemoveUnpackedFiles(repositoryPath, newComposeFilePath string) error {
 	}
 
 	for _, file := range files {
-		if filepath.Join(repositoryPath, file.Name()) != newComposeFilePath {
-			path := filepath.Join(repositoryPath, file.Name())
+		path := filepath.Join(repositoryPath, file.Name())
 
-			if err = os.RemoveAll(path); err != nil {
-				return errors.Wrapf(err, "Failed to remove files in %s.", path)
-			}
+		if err = os.RemoveAll(path); err != nil {
+			return errors.Wrapf(err, "Failed to remove files in %s.", path)
 		}
 	}
 

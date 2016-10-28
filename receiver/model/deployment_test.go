@@ -18,12 +18,9 @@ func TestDeploymentFromArgs(t *testing.T) {
 		AppName:    "app",
 	}
 
-	timestamp := "1467181319"
-	repositoryDir := "/repos"
-
 	args = []string{}
 
-	_, err := DeploymentFromArgs(app, args, timestamp, repositoryDir)
+	_, err := DeploymentFromArgs(app, args)
 
 	if err == nil {
 		t.Fatalf("Error should be raised when empty args is passed")
@@ -37,7 +34,7 @@ func TestDeploymentFromArgs(t *testing.T) {
 		"refs/heads/branch",
 	}
 
-	deployment, err := DeploymentFromArgs(app, args, timestamp, repositoryDir)
+	deployment, err := DeploymentFromArgs(app, args)
 
 	if err != nil {
 		t.Fatalf("Error should not be raised.")
@@ -65,17 +62,9 @@ func TestNewDeployment(t *testing.T) {
 
 	branch := "branch"
 	revision := "19fb23cd71a4cf2eab00ad1a393e40de4ed61531"
-	timestamp := "1467181319"
-	repositoryDir := "/repos"
+	serviceArn := "arn:aws:ecs:ap-northeast-1:012345678901:service/paus-dtan4-rails-0123456789"
 
-	deployment := NewDeployment(app, branch, revision, timestamp, repositoryDir)
-
-	expected = "/repos/user/user-repository-19fb23cd/docker-compose-1467181319.yml"
-	actual = deployment.ComposeFilePath
-
-	if actual != expected {
-		t.Fatalf("ComposeFilePath does not match. expected: %s actual: %s", expected, actual)
-	}
+	deployment := NewDeployment(app, branch, revision, serviceArn)
 
 	expected = "user-repository-19fb23cd"
 	actual = deployment.ProjectName

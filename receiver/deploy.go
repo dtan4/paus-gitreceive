@@ -110,6 +110,13 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 		return err
 	}
 
+	msg.PrintTitle("Service started!")
+
+	deployment.ServiceArn = *svc.ServiceArn
+	if err := deployment.Save(); err != nil {
+		return err
+	}
+
 	webContainer, err := aws.ECS().GetWebContainer(svc)
 	if err != nil {
 		return err
@@ -141,7 +148,7 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	printDeployedURLs(application.Repository, config, identifiers)
 
-	if err = util.RemoveUnpackedFiles(repositoryPath, deployment.ComposeFilePath); err != nil {
+	if err = util.RemoveUnpackedFiles(repositoryPath); err != nil {
 		return err
 	}
 
