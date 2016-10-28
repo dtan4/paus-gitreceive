@@ -244,23 +244,3 @@ func TestRewritePortBindings(t *testing.T) {
 		t.Fatalf("Failed to rewrite non-web ports in V2. Expect: [5432], actual: %v", v2DbPorts)
 	}
 }
-
-func TestSaveAs(t *testing.T) {
-	setup()
-
-	newFilePath := filepath.Join("/tmp", "new-docker-compose.yml")
-
-	if fileExists(newFilePath) {
-		os.Remove(newFilePath)
-	}
-
-	if err := v1Compose.SaveAs(newFilePath); err != nil {
-		t.Fatalf("SaveAs() fails: %s", err.Error())
-	}
-
-	if !fileExists(newFilePath) {
-		t.Fatalf("SaveAs() does not create %s", newFilePath)
-	}
-
-	os.Remove(newFilePath)
-}
