@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
-	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/pkg/errors"
 )
 
@@ -45,7 +45,7 @@ func ApplicationFromArgs(args []string) (*Application, error) {
 func (app *Application) BuildArgs() (map[string]string, error) {
 	var args = make(map[string]string)
 
-	items, err := service.Select(buildArgsTable, userAppIndex, map[string]string{
+	items, err := aws.DynamoDB().Select(buildArgsTable, userAppIndex, map[string]string{
 		"user": app.Username,
 		"app":  app.AppName,
 	})
@@ -68,7 +68,7 @@ func (app *Application) BuildArgs() (map[string]string, error) {
 func (app *Application) EnvironmentVariables() (map[string]string, error) {
 	var envs = make(map[string]string)
 
-	items, err := service.Select(envsTable, userAppIndex, map[string]string{
+	items, err := aws.DynamoDB().Select(envsTable, userAppIndex, map[string]string{
 		"user": app.Username,
 		"app":  app.AppName,
 	})
@@ -89,7 +89,7 @@ func (app *Application) EnvironmentVariables() (map[string]string, error) {
 
 // HealthCheck returns healthcheck parameters of given application
 func (app *Application) HealthCheck() (string, int, int, error) {
-	items, err := service.Select(healthchecksTable, userAppIndex, map[string]string{
+	items, err := aws.DynamoDB().Select(healthchecksTable, userAppIndex, map[string]string{
 		"user": app.Username,
 		"app":  app.AppName,
 	})

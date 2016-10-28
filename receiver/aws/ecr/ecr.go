@@ -1,4 +1,4 @@
-package service
+package ecr
 
 import (
 	"encoding/base64"
@@ -10,11 +10,20 @@ import (
 	"github.com/fsouza/go-dockerclient"
 )
 
-// CreateRepository creates new Repository
-func CreateRepository(registryID, repository string) error {
-	svc := ecr.New(session.New(), &aws.Config{})
+type ECRClient struct {
+	client *ecr.ECR
+}
 
-	_, err := svc.CreateRepository(&ecr.CreateRepositoryInput{
+// NewECR creates new ECR object
+func NewECRClient() *ECRClient {
+	return &ECRClient{
+		client: ecr.New(session.New(), &aws.Config{}),
+	}
+}
+
+// CreateRepository creates new Repository
+func (c *ECRClient) CreateRepository(registryID, repository string) error {
+	_, err := c.client.CreateRepository(&ecr.CreateRepositoryInput{
 		RepositoryName: aws.String(repository),
 	})
 
@@ -26,10 +35,8 @@ func CreateRepository(registryID, repository string) error {
 }
 
 // GetECRAuthConf returns ECR authrization configuration
-func GetECRAuthConf(registryID string) (docker.AuthConfiguration, error) {
-	svc := ecr.New(session.New(), &aws.Config{})
-
-	resp, err := svc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{
+func (c *ECRClient) GetECRAuthConf(registryID string) (docker.AuthConfiguration, error) {
+	resp, err := c.client.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{
 		RegistryIds: []*string{
 			aws.String(registryID),
 		},
@@ -52,15 +59,13 @@ func GetECRAuthConf(registryID string) (docker.AuthConfiguration, error) {
 }
 
 // GetRegistryDomain returns fully-qualified ECR registry domain
-func GetRegistryDomain(accountID, region string) string {
+func (c *ECRClient) GetRegistryDomain(accountID, region string) string {
 	return accountID + ".dkr.ecr." + region + ".amazonaws.com"
 }
 
 // RepositoryExists returns whether the specified repository exists or not
-func RepositoryExists(registryID, repository string) bool {
-	svc := ecr.New(session.New(), &aws.Config{})
-
-	resp, err := svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{
+func (c *ECRClient) RepositoryExists(registryID, repository string) bool {
+	resp, err := c.client.DescribeRepositories(&ecr.DescribeRepositoriesInput{
 		RepositoryNames: []*string{
 			aws.String(repository),
 		},

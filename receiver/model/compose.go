@@ -16,9 +16,9 @@ import (
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/dtan4/paus-gitreceive/receiver/modules/compose/ecs/utils"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
-	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
@@ -72,12 +72,12 @@ func NewCompose(dockerHost, composeFilePath, projectName, awsRegion string) (*Co
 	}
 
 	if awsRegion != "" {
-		accountID, err := service.GetAWSAccountID()
+		accountID, err := aws.STS().GetAWSAccountID()
 		if err != nil {
 			return nil, err
 		}
 
-		registryDomain = service.GetRegistryDomain(accountID, awsRegion)
+		registryDomain = aws.ECR().GetRegistryDomain(accountID, awsRegion)
 	}
 
 	return &Compose{
@@ -162,20 +162,20 @@ func (c *Compose) Push(images map[string]*Image) error {
 
 	client, _ := docker.NewClient(c.dockerHost)
 
-	accountID, err := service.GetAWSAccountID()
+	accountID, err := aws.STS().GetAWSAccountID()
 	if err != nil {
 		return err
 	}
 
 	// default registry ID is equivalent to AWS account ID
-	authConf, err := service.GetECRAuthConf(accountID)
+	authConf, err := aws.ECR().GetECRAuthConf(accountID)
 	if err != nil {
 		return err
 	}
 
 	for _, image := range images {
-		if !service.RepositoryExists(image.Registry, image.Name) {
-			if err := service.CreateRepository(image.Registry, image.Name); err != nil {
+		if !aws.ECR().RepositoryExists(image.Registry, image.Name) {
+			if err := aws.ECR().CreateRepository(image.Registry, image.Name); err != nil {
 				return err
 			}
 		}

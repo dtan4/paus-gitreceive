@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dtan4/paus-gitreceive/receiver/aws"
 	"github.com/dtan4/paus-gitreceive/receiver/config"
 	"github.com/dtan4/paus-gitreceive/receiver/model"
 	"github.com/dtan4/paus-gitreceive/receiver/msg"
-	"github.com/dtan4/paus-gitreceive/receiver/service"
 	"github.com/dtan4/paus-gitreceive/receiver/store"
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/dtan4/paus-gitreceive/receiver/vulcand"
@@ -82,7 +82,7 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	msg.PrintTitle("Registering TaskDefinition...")
 
-	td, err := service.RegisterTaskDefinition(taskDefinition)
+	td, err := aws.ECS().RegisterTaskDefinition(taskDefinition)
 	if err != nil {
 		return err
 	}
@@ -91,13 +91,13 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	msg.PrintTitle("Creating Log Group...")
 
-	if err := service.CreateLogGroup(serviceName); err != nil {
+	if err := aws.CloudWatchLogs().CreateLogGroup(serviceName); err != nil {
 		return err
 	}
 
 	msg.PrintTitle("Creating service ...")
 
-	svc, err := service.CreateService(serviceName, config.ClusterName, *td.TaskDefinitionArn)
+	svc, err := aws.ECS().CreateService(serviceName, config.ClusterName, *td.TaskDefinitionArn)
 	if err != nil {
 		return err
 	}
@@ -106,21 +106,21 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	msg.PrintTitle("Wait for service becomes ACTIVE ...")
 
-	if err := service.WaitUntilServicesStable(svc); err != nil {
+	if err := aws.ECS().WaitUntilServicesStable(svc); err != nil {
 		return err
 	}
 
-	webContainer, err := service.GetWebContainer(svc)
+	webContainer, err := aws.ECS().GetWebContainer(svc)
 	if err != nil {
 		return err
 	}
 
-	instanceID, err := service.GetRunningInstance(svc)
+	instanceID, err := aws.ECS().GetRunningInstance(svc)
 	if err != nil {
 		return err
 	}
 
-	instance, err := service.GetInstance(instanceID)
+	instance, err := aws.EC2().GetInstance(instanceID)
 	if err != nil {
 		return err
 	}
