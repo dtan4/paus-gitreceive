@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -22,7 +21,6 @@ import (
 	"github.com/dtan4/paus-gitreceive/receiver/util"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -282,37 +280,6 @@ func (c *Compose) RewritePortBindings() {
 			svc.Ports = newPorts
 		}
 	}
-}
-
-func (c *Compose) SaveAs(filePath string) error {
-	services := map[string]*config.ServiceConfig{}
-
-	for _, key := range c.project.ServiceConfigs.Keys() {
-		if svc, ok := c.project.ServiceConfigs.Get(key); ok {
-			services[key] = svc
-		}
-	}
-
-	cfg := &ComposeConfig{
-		Version:  "2",
-		Services: services,
-		Volumes:  c.project.VolumeConfigs,
-		Networks: c.project.NetworkConfigs,
-	}
-
-	data, err := yaml.Marshal(cfg)
-
-	if err != nil {
-		return errors.Wrap(err, "Failed to generate YAML file.")
-	}
-
-	if err = ioutil.WriteFile(filePath, data, 0644); err != nil {
-		return errors.Wrapf(err, "Failed to save as YAML file. path: %s", filePath)
-	}
-
-	c.ComposeFilePath = filePath
-
-	return nil
 }
 
 // TransformToTaskDefinition converts the compose yml into ECS TaskDefinition

@@ -181,10 +181,6 @@ func prepareComposeFile(application *model.Application, deployment *model.Deploy
 
 	compose.RewritePortBindings()
 
-	if err := compose.SaveAs(deployment.ComposeFilePath); err != nil {
-		return err
-	}
-
 	return nil
 }
 

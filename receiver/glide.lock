@@ -1,5 +1,5 @@
-hash: 68e9dd2aca3d2c66225c9393f20b678fe002e4baa8607ffe01c24843091669b1
-updated: 2016-10-25T17:05:16.328309816+09:00
+hash: 2805b45016b761bf74877fe49d3da23a4a8e37d1a70f8e19c28d289f3d8f066f
+updated: 2016-10-28T15:29:23.33815293+09:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 32cdc88aa5cd2ba4afa049da884aaf9a3d103ef4
@@ -21,6 +21,7 @@ imports:
   - aws/signer/v4
   - private/endpoints
   - private/protocol
+  - private/protocol/ec2query
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
   - private/protocol/query
@@ -28,6 +29,9 @@ imports:
   - private/protocol/rest
   - private/protocol/xml/xmlutil
   - private/waiter
+  - service/cloudwatchlogs
+  - service/dynamodb
+  - service/ec2
   - service/ecr
   - service/ecs
   - service/sts
