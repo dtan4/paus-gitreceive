@@ -92,7 +92,7 @@ func deploy(application *model.Application, deployment *model.Deployment, config
 
 	msg.PrintTitle("Creating Log Group...")
 
-	if err := service.CreateLogGroup(serviceName); err != nil {
+	if err := aws.CloudWatchLogs().CreateLogGroup(serviceName); err != nil {
 		return err
 	}
 

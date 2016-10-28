@@ -1,16 +1,27 @@
 package aws
 
 import (
+	"github.com/dtan4/paus-gitreceive/receiver/aws/cloudwatchlogs"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ec2"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/ecr"
 	"github.com/dtan4/paus-gitreceive/receiver/aws/sts"
 )
 
 var (
-	ec2Client *ec2.EC2Client
-	ecrClient *ecr.ECRClient
-	stsClient *sts.STSClient
+	cloudWatchLogsClient *cloudwatchlogs.CloudWatchLogsClient
+	ec2Client            *ec2.EC2Client
+	ecrClient            *ecr.ECRClient
+	stsClient            *sts.STSClient
 )
+
+// CloudWatchLogs returns CloudWatchLogs object and create new one if it does not exist
+func CloudWatchLogs() *cloudwatchlogs.CloudWatchLogsClient {
+	if cloudWatchLogsClient == nil {
+		cloudWatchLogsClient = cloudwatchlogs.NewCloudWatchLogsClient()
+	}
+
+	return cloudWatchLogsClient
+}
 
 // EC2 returns EC2 object and create new one if it does not exist
 func EC2() *ec2.EC2Client {
